@@ -4,7 +4,8 @@ namespace App\Http\Controllers\Api\v1;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
-use App\Models\User; // Import model User
+use App\Models\User; 
+use Illuminate\Support\Facades\Log;// Import model User
 
 class UserController extends Controller
 {
@@ -27,12 +28,19 @@ class UserController extends Controller
         $user->email = $request->input('email');
         $user->password = bcrypt($request->input('password'));
         $user->phone = $request->input('phone');
-        $user->role = $request->input('role');
+        if ($request->hasFile('image')) {
+            $image = $request->file('image');
+            $imageName = time() . '.' . $image->getClientOriginalExtension();
+            $image->storeAs('avatars', $imageName);
+        }
+
+        $user->role = 'root';
         $user->status = $request->input('status', 'active');
         $user->save();
 
         return response()->json(['message' => 'Người dùng đã được tạo', 'data' => $user]);
     }
+
 
     /**
      * Display the specified resource.
@@ -61,7 +69,6 @@ class UserController extends Controller
         $user->name = $request->input('name');
         $user->email = $request->input('email');
         $user->phone = $request->input('phone');
-        $user->role = $request->input('role');
         $user->status = $request->input('status', 'active');
         $user->save();
 

@@ -27,7 +27,7 @@ Route::prefix('v1')->group(function () {
     Route::resource('user', UserController::class);
     Route::resource('post', PostController::class);
 
-
+    Route::post('images-upload',[TagController::class, 'uploadImage']);
     Route::post('login', [AuthController::class, 'login']);
     Route::post('register', [AuthController::class, 'register']);
     Route::post('logout', [AuthController::class, 'logout']);

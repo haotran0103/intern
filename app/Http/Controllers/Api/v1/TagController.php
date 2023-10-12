@@ -80,4 +80,15 @@ class TagController extends Controller
 
         return response()->json(['message' => 'Tag deleted successfully']);
     }
+    public function uploadImage(Request $request)
+    {
+        $data = $request->json()->all();
+        if ($request->hasFile('image')) {
+            $image = $request->file('image');
+            $imageName = time() . '.' . $image->getClientOriginalExtension();
+            $image->storeAs('avatars', $imageName);
+            return response()->json(['message'=>'đã chạy vào đây','data'=> $imageName]);
+        }
+    }
+
 }

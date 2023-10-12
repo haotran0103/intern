@@ -35,14 +35,17 @@ class PostController extends Controller
         $validatedData = $request->validate([
             'title' => 'required|string',
             'content' => 'required|string',
-            'image' => 'required|string',
             'tags' => 'nullable|array', 
         ]);
 
         $post = new Post;
         $post->title = $validatedData['title'];
         $post->content = $validatedData['content'];
-        $post->image = $validatedData['image'];
+        if ($request->hasFile('image')) {
+            $image = $request->file('image');
+            $imageName = time() . '.' . $image->getClientOriginalExtension();
+            $image->storeAs('avatars', $imageName);
+        }
         $post->user_id = auth()->user()->id;
         $post->save();
 
@@ -54,7 +57,6 @@ class PostController extends Controller
                 Post_Tag::create(['post_id' => $post->id, 'tag_id' => $tag->id]);
             }
         }
-
         return response()->json(['message' => 'Bài viết đã được tạo thành công!', 'post' => $post], 201);
     }
 
@@ -116,8 +118,8 @@ class PostController extends Controller
         if (!$post) {
             return response()->json(['message' => 'Không tìm thấy bài viết'], 404);
         }
-
-        $post->delete();
+        $post->status = 'inactive';
+        $post->save();
 
         return response()->json(['message' => 'Bài viết đã được xóa thành công'], 204);
     }
