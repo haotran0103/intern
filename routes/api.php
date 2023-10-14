@@ -5,10 +5,10 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\v1\CategoryController;
 use App\Http\Controllers\Api\v1\PostCategorieController;
 use App\Http\Controllers\Api\v1\PostController;
-use App\Http\Controllers\Api\v1\PostTagController;
-use App\Http\Controllers\Api\v1\TagController;
 use App\Http\Controllers\Api\v1\AuthController;
 use App\Http\Controllers\Api\v1\UserController;
+use App\Http\Controllers\Api\v1\UpdateStatusController;
+use App\Http\Controllers\Api\v1\SubCategoryController;
 /*
 |--------------------------------------------------------------------------
 | API Routes
@@ -26,8 +26,12 @@ Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
 Route::prefix('v1')->group(function () {
     Route::resource('user', UserController::class);
     Route::resource('post', PostController::class);
+    Route::resource('category', CategoryController::class);
+    Route::resource('subcategory', SubCategoryController::class);
 
-    Route::post('images-upload',[TagController::class, 'uploadImage']);
+    Route::post('/userStatus', [UpdateStatusController::class, 'userStatus']);
+    Route::post('/upload-images', [ImageController::class, 'uploadImage']);
+    Route::get('/subcategories/{category_id}', [SubCategoryController::class , 'getSubcategoriesByCategoryId']);
     Route::post('login', [AuthController::class, 'login']);
     Route::post('register', [AuthController::class, 'register']);
     Route::post('logout', [AuthController::class, 'logout']);

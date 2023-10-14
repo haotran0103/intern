@@ -15,28 +15,20 @@ class CategoryController extends Controller
     public function index()
     {
         $categories = Category::all();
-        return response()->json($categories, 200);
+        return response()->json(['data'=> $categories,'message'=>'success'], 200);
     }
 
-    /**
-     * Store a newly created resource in storage.
-     */
     public function store(Request $request)
     {
-        $validatedData = $request->validate([
-            'name' => 'required|string|unique:categories',
-        ]);
 
         $category = new Category;
-        $category->name = $validatedData['name'];
+        $category->name = $request->input('name');
         $category->save();
 
-        return response()->json(['message' => 'Danh mục đã được tạo thành công!', 'category' => $category], 201);
+        return response()->json(['message' => 'success', 'category' => $category], 201);
     }
 
-    /**
-     * Display the specified resource.
-     */
+
     public function show($id)
     {
         $category = Category::find($id);
@@ -45,15 +37,25 @@ class CategoryController extends Controller
             return response()->json(['message' => 'Không tìm thấy danh mục'], 404);
         }
 
-        // Lấy danh sách bài viết thuộc danh mục
         $posts = $category->posts;
 
         return response()->json(['category' => $category, 'posts' => $posts], 200);
     }
 
-    /**
-     * Update the specified resource in storage.
-     */
+/**
+ * The function updates a category's name in the database based on the provided request data and
+ * returns a JSON response with a success message and the updated category.
+ * 
+ * @param Request request The  parameter is an instance of the Request class, which represents
+ * the HTTP request made to the server. It contains information about the request, such as the request
+ * method, headers, and input data.
+ * @param id The  parameter is the identifier of the category that needs to be updated. It is used
+ * to find the category in the database and update its name.
+ * 
+ * @return The code is returning a JSON response with a message and the updated category object. The
+ * message indicates that the category has been successfully updated.
+ */
+
     public function update(Request $request, $id)
     {
         $validatedData = $request->validate([
@@ -72,9 +74,17 @@ class CategoryController extends Controller
         return response()->json(['message' => 'Danh mục đã được cập nhật!', 'category' => $category], 200);
     }
 
-    /**
-     * Remove the specified resource from storage.
-     */
+
+/**
+ * The `destroy` function in PHP deletes a category and its associated posts from the database.
+ * 
+ * @param id The parameter "id" represents the ID of the category that needs to be deleted.
+ * 
+ * @return a JSON response with a message indicating whether the category was successfully deleted or
+ * not. If the category is not found, a 404 status code and a message "Không tìm thấy danh mục"
+ * (Category not found) will be returned. If the category is successfully deleted, a 204 status code
+ * and a message "Danh mục đã được xóa
+ */
     public function destroy($id)
     {
         $category = Category::find($id);
@@ -82,8 +92,6 @@ class CategoryController extends Controller
         if (!$category) {
             return response()->json(['message' => 'Không tìm thấy danh mục'], 404);
         }
-
-        // Xóa liên kết bài viết thuộc danh mục
         Category_post::where('category_id', $id)->delete();
 
         $category->delete();

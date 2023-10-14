@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api\v1;
 
 use App\Models\Post_Tag;
+use App\Models\subcategory;
 use App\Models\Tag;
 use Google\Cloud\Core\ExponentialBackoff;
 use Google\Cloud\Core\Timestamp;
@@ -21,9 +22,9 @@ class PostController extends Controller
      */
     public function index()
     {
-        $posts = Post::with('tags')->get();
+        $posts = Post::all();
 
-        return response()->json($posts, 200);
+        return response()->json(['message'=>'success','data'=> $posts], 200);
     }
 
 
@@ -32,32 +33,29 @@ class PostController extends Controller
      */
     public function store(Request $request)
     {
-        $validatedData = $request->validate([
-            'title' => 'required|string',
-            'content' => 'required|string',
-            'tags' => 'nullable|array', 
-        ]);
 
         $post = new Post;
-        $post->title = $validatedData['title'];
-        $post->content = $validatedData['content'];
+        $post->title = $request->input('title');
+        $post->content = $request->input('content');
         if ($request->hasFile('image')) {
             $image = $request->file('image');
             $imageName = time() . '.' . $image->getClientOriginalExtension();
-            $image->storeAs('avatars', $imageName);
+            $image->storeAs('postImage', $imageName);
+            $post->image = 'postImage'. $imageName;
         }
+        if($request->has('serial_number')){
+            $post->serial_number = $request->input('serial_number');
+        }
+        if ($request->has('Issuance_date')) {
+            $post->Issuance_date = $request->input('Issuance_date');
+        }
+        $post->subcategory_id = $request->input('subcategory_id');
         $post->user_id = auth()->user()->id;
+
         $post->save();
 
-        if (isset($validatedData['tags'])) {
-            $tags = $validatedData['tags'];
-
-            foreach ($tags as $tagName) {
-                $tag = Tag::firstOrCreate(['name' => $tagName]); 
-                Post_Tag::create(['post_id' => $post->id, 'tag_id' => $tag->id]);
-            }
-        }
-        return response()->json(['message' => 'Bài viết đã được tạo thành công!', 'post' => $post], 201);
+        
+        return response()->json(['message' => 'success', 'post' => $post], 201);
     }
 
     /**
@@ -123,4 +121,6 @@ class PostController extends Controller
 
         return response()->json(['message' => 'Bài viết đã được xóa thành công'], 204);
     }
+
+
 }
