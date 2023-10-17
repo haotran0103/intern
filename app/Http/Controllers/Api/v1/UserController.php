@@ -5,19 +5,29 @@ namespace App\Http\Controllers\Api\v1;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\User;
-use Illuminate\Support\Facades\Log; 
-use Illuminate\Support\Facades\Storage;// Import model User
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Storage; // Import model User
 
 class UserController extends Controller
 {
 
+    /**
+     * @OA\Info(
+     *   title="User API Documentation",
+     *   version="1.0.0"
+     * )
+     */
 
-/**
- * The index function retrieves all users from the database and returns their information, including
- * image URLs, in JSON format.
- * 
- * @return a JSON response containing an array of users with their respective image URLs.
- */
+    /**
+     * @OA\Get(
+     *     path="/api/v1/users",
+     *     summary="Lấy danh sách người dùng",
+     *     operationId="getUsers",
+     *     tags={"Users"},
+     *     @OA\Response(response=200, description="Danh sách người dùng"),
+     *     @OA\Response(response=500, description="Lỗi server"),
+     * )
+     */
     public function index()
     {
         try {
@@ -29,11 +39,11 @@ class UserController extends Controller
                     'name' => $user->name,
                     'email' => $user->email,
                     'phone' => $user->phone,
-                    'avatar' => $user->image, 
+                    'avatar' => $user->image,
                     'role' => $user->role,
                     'status' => $user->status,
-                    'created_at' =>$user->created_at,
-                    'updated_at' =>$user->updated_at
+                    'created_at' => $user->created_at,
+                    'updated_at' => $user->updated_at
 
                 ];
             });
@@ -45,18 +55,26 @@ class UserController extends Controller
     }
 
 
-   /**
-    * The function stores user data, including an optional image, and returns a JSON response with a
-    * success message and the user data.
-    * 
-    * @param Request request The  parameter is an instance of the Request class, which
-    * represents an HTTP request. It contains all the data and information about the incoming request,
-    * such as the request method, headers, query parameters, form data, and uploaded files. In this
-    * code snippet, the  parameter is used to
-    * 
-    * @return a JSON response with a message and data. The message is "Người dùng đã được tạo" (which
-    * translates to "User has been created" in English) and the data is the newly created user object.
-    */
+    /**
+     * @OA\Post(
+     *     path="/api/v1/users",
+     *     summary="Tạo người dùng mới",
+     *     operationId="createUser",
+     *     tags={"Users"},
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(
+     *             @OA\Property(property="name", type="string"),
+     *             @OA\Property(property="email", type="string"),
+     *             @OA\Property(property="password", type="string"),
+     *             @OA\Property(property="phone", type="string"),
+     *             @OA\Property(property="image", type="string", format="binary"),
+     *             @OA\Property(property="status", type="string", default="active"),
+     *         )
+     *     ),
+     *     @OA\Response(response=201, description="Người dùng đã được tạo"),
+     * )
+     */
     public function store(Request $request)
     {
         $user = new User();
@@ -78,15 +96,17 @@ class UserController extends Controller
         return response()->json(['message' => 'Người dùng đã được tạo', 'data' => $user]);
     }
 
-/**
- * The function retrieves user data and returns it in JSON format, including the user's ID, name,
- * email, password, phone, avatar, role, and status.
- * 
- * @param string id The "id" parameter is a string that represents the unique identifier of a user. It
- * is used to retrieve the user's information from the database.
- * 
- * @return a JSON response containing the user data.
- */
+    /**
+     * @OA\Get(
+     *     path="/api/v1/users/{id}",
+     *     summary="Lấy thông tin người dùng theo ID",
+     *     operationId="getUserById",
+     *     tags={"Users"},
+     *     @OA\Parameter(name="id", in="path", required=true, description="ID của người dùng", @OA\Schema(type="string")),
+     *     @OA\Response(response=200, description="Thông tin người dùng"),
+     *     @OA\Response(response=404, description="Không tìm thấy người dùng"),
+     * )
+     */
     public function show(string $id)
     {
         $user = User::find($id);
@@ -110,18 +130,28 @@ class UserController extends Controller
     }
 
 
-/**
- * The function updates a user's information in a database, including their name, email, phone number,
- * status, avatar image, and password.
- * 
- * @param Request request The  parameter is an instance of the Request class, which represents
- * an HTTP request. It contains information about the request such as the request method, headers, and
- * input data.
- * @param string id The ID of the user that needs to be updated.
- * 
- * @return a JSON response with a message and data. The message indicates that the user information has
- * been updated, and the data contains the updated user object.
- */
+    /**
+     * @OA\Put(
+     *     path="/api/v1/users/{id}",
+     *     summary="Cập nhật thông tin người dùng",
+     *     operationId="updateUser",
+     *     tags={"Users"},
+     *     @OA\Parameter(name="id", in="path", required=true, description="ID của người dùng", @OA\Schema(type="string")),
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(
+     *             @OA\Property(property="name", type="string"),
+     *             @OA\Property(property="email", type="string"),
+     *             @OA\Property(property="phone", type="string"),
+     *             @OA\Property(property="image", type="string", format="binary"),
+     *             @OA\Property(property="status", type="string", default="active"),
+     *             @OA\Property(property="password", type="string"),
+     *         )
+     *     ),
+     *     @OA\Response(response=200, description="Thông tin người dùng đã được cập nhật"),
+     *     @OA\Response(response=404, description="Không tìm thấy người dùng"),
+     * )
+     */
     public function update(Request $request, string $id)
     {
         $user = User::find($id);
@@ -153,19 +183,17 @@ class UserController extends Controller
 
         return response()->json(['message' => 'Thông tin người dùng đã được cập nhật', 'data' => $user]);
     }
-
-
-/**
- * The destroy function deletes a user with the given ID and returns a JSON response with a success
- * message.
- * 
- * @param string id The "id" parameter is a string that represents the unique identifier of the user
- * that needs to be deleted.
- * 
- * @return a JSON response. If the user is not found, it returns a JSON response with a message "Không
- * tìm thấy người dùng" and a status code of 404. If the user is found and successfully deleted, it
- * returns a JSON response with a message "Người dùng đã bị xóa".
- */
+    /**
+     * @OA\Delete(
+     *     path="/api/v1/users/{id}",
+     *     summary="Xóa người dùng theo ID",
+     *     operationId="deleteUser",
+     *     tags={"Users"},
+     *     @OA\Parameter(name="id", in="path", required=true, description="ID của người dùng", @OA\Schema(type="string")),
+     *     @OA\Response(response=204, description="Người dùng đã bị xóa"),
+     *     @OA\Response(response=404, description="Không tìm thấy người dùng"),
+     * )
+     */
     public function destroy(string $id)
     {
         $user = User::find($id);
@@ -178,5 +206,4 @@ class UserController extends Controller
 
         return response()->json(['message' => 'Người dùng đã bị xóa']);
     }
-
 }

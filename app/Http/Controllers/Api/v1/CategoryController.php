@@ -10,14 +10,41 @@ use Illuminate\Http\Request;
 class CategoryController extends Controller
 {
     /**
-     * Display a listing of the resource.
+     * @OA\Info(
+     *     title="category API Documentation",
+     *     version="1.0.0",
+     * )
+     */
+
+    /**
+     * @OA\Get(
+     *     path="/api/v1/categories",
+     *     summary="Lấy danh sách các danh mục",
+     *     operationId="getCategories",
+     *     tags={"Categories"},
+     *     @OA\Response(response=200, description="Danh sách các danh mục"),
+     * )
      */
     public function index()
     {
         $categories = Category::all();
         return response()->json(['data'=> $categories,'message'=>'success'], 200);
     }
-
+    /**
+     * @OA\Post(
+     *     path="/api/v1/categories",
+     *     summary="Tạo danh mục mới",
+     *     operationId="createCategory",
+     *     tags={"Categories"},
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(
+     *             @OA\Property(property="name", type="string", example="Danh mục mới")
+     *         )
+     *     ),
+     *     @OA\Response(response=201, description="Danh mục mới đã được tạo"),
+     * )
+     */
     public function store(Request $request)
     {
 
@@ -27,7 +54,23 @@ class CategoryController extends Controller
 
         return response()->json(['message' => 'success', 'category' => $category], 201);
     }
-
+    /**
+     * @OA\Get(
+     *     path="/api/v1/categories/{id}",
+     *     summary="Lấy thông tin danh mục",
+     *     operationId="getCategory",
+     *     tags={"Categories"},
+     *     @OA\Parameter(
+     *         name="id",
+     *         in="path",
+     *         required=true,
+     *         description="ID của danh mục",
+     *         @OA\Schema(type="integer")
+     *     ),
+     *     @OA\Response(response=200, description="Thông tin danh mục"),
+     *     @OA\Response(response=404, description="Không tìm thấy danh mục"),
+     * )
+     */
 
     public function show($id)
     {
@@ -42,19 +85,29 @@ class CategoryController extends Controller
         return response()->json(['category' => $category, 'posts' => $posts], 200);
     }
 
-/**
- * The function updates a category's name in the database based on the provided request data and
- * returns a JSON response with a success message and the updated category.
- * 
- * @param Request request The  parameter is an instance of the Request class, which represents
- * the HTTP request made to the server. It contains information about the request, such as the request
- * method, headers, and input data.
- * @param id The  parameter is the identifier of the category that needs to be updated. It is used
- * to find the category in the database and update its name.
- * 
- * @return The code is returning a JSON response with a message and the updated category object. The
- * message indicates that the category has been successfully updated.
- */
+    /**
+     * @OA\Put(
+     *     path="/api/v1/categories/{id}",
+     *     summary="Cập nhật danh mục",
+     *     operationId="updateCategory",
+     *     tags={"Categories"},
+     *     @OA\Parameter(
+     *         name="id",
+     *         in="path",
+     *         required=true,
+     *         description="ID của danh mục",
+     *         @OA\Schema(type="integer")
+     *     ),
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(
+     *             @OA\Property(property="name", type="string", example="Danh mục cập nhật")
+     *         )
+     *     ),
+     *     @OA\Response(response=200, description="Danh mục đã được cập nhật"),
+     *     @OA\Response(response=404, description="Không tìm thấy danh mục"),
+     * )
+     */
 
     public function update(Request $request, $id)
     {
@@ -75,16 +128,23 @@ class CategoryController extends Controller
     }
 
 
-/**
- * The `destroy` function in PHP deletes a category and its associated posts from the database.
- * 
- * @param id The parameter "id" represents the ID of the category that needs to be deleted.
- * 
- * @return a JSON response with a message indicating whether the category was successfully deleted or
- * not. If the category is not found, a 404 status code and a message "Không tìm thấy danh mục"
- * (Category not found) will be returned. If the category is successfully deleted, a 204 status code
- * and a message "Danh mục đã được xóa
- */
+    /**
+     * @OA\Delete(
+     *     path="/api/v1/categories/{id}",
+     *     summary="Xóa danh mục",
+     *     operationId="deleteCategory",
+     *     tags={"Categories"},
+     *     @OA\Parameter(
+     *         name="id",
+     *         in="path",
+     *         required=true,
+     *         description="ID của danh mục",
+     *         @OA\Schema(type="integer")
+     *     ),
+     *     @OA\Response(response=204, description="Danh mục đã được xóa thành công"),
+     *     @OA\Response(response=404, description="Không tìm thấy danh mục"),
+     * )
+     */
     public function destroy($id)
     {
         $category = Category::find($id);
