@@ -4,31 +4,54 @@ namespace App\Http\Controllers\Api\v1;
 
 use App\Http\Controllers\Controller;
 use App\Models\Category;
-use App\Models\Category_post;
 use Illuminate\Http\Request;
 
 class CategoryController extends Controller
 {
     /**
      * @OA\Info(
-     *     title="category API Documentation",
+     *     title="Category API Documentation",
      *     version="1.0.0",
      * )
      */
-
     /**
      * @OA\Get(
      *     path="/api/v1/categories",
-     *     summary="Lấy danh sách các danh mục",
+     *     summary="Lấy danh sách tất cả các danh mục",
      *     operationId="getCategories",
      *     tags={"Categories"},
-     *     @OA\Response(response=200, description="Danh sách các danh mục"),
+     *     @OA\Response(response=200, description="Danh sách tất cả các danh mục"),
      * )
      */
     public function index()
     {
         $categories = Category::all();
-        return response()->json(['data'=> $categories,'message'=>'success'], 200);
+        return response()->json($categories);
+    }
+    /**
+     * @OA\Get(
+     *     path="/api/v1/categories/{id}",
+     *     summary="Lấy thông tin của danh mục theo ID",
+     *     operationId="getCategory",
+     *     tags={"Categories"},
+     *     @OA\Parameter(
+     *         name="id",
+     *         in="path",
+     *         required=true,
+     *         description="ID của danh mục",
+     *         @OA\Schema(type="integer")
+     *     ),
+     *     @OA\Response(response=200, description="Thông tin của danh mục"),
+     *     @OA\Response(response=404, description="Không tìm thấy danh mục"),
+     * )
+     */
+    public function show($id)
+    {
+        $category = Category::find($id);
+        if (!$category) {
+            return response()->json(['message' => 'Category not found'], 404);
+        }
+        return response()->json($category);
     }
     /**
      * @OA\Post(
@@ -39,7 +62,8 @@ class CategoryController extends Controller
      *     @OA\RequestBody(
      *         required=true,
      *         @OA\JsonContent(
-     *             @OA\Property(property="name", type="string", example="Danh mục mới")
+     *             @OA\Property(property="name", type="string", description="Tên của danh mục"),
+     *             @OA\Property(property="parent_id", type="integer", description="ID của danh mục cha (nếu có)"),
      *         )
      *     ),
      *     @OA\Response(response=201, description="Danh mục mới đã được tạo"),
@@ -47,48 +71,17 @@ class CategoryController extends Controller
      */
     public function store(Request $request)
     {
-
-        $category = new Category;
+        $category = new Category();
         $category->name = $request->input('name');
+        $category->parent_id = $request->input('parent_id');
         $category->save();
 
-        return response()->json(['message' => 'success', 'category' => $category], 201);
+        return response()->json($category, 201);
     }
-    /**
-     * @OA\Get(
-     *     path="/api/v1/categories/{id}",
-     *     summary="Lấy thông tin danh mục",
-     *     operationId="getCategory",
-     *     tags={"Categories"},
-     *     @OA\Parameter(
-     *         name="id",
-     *         in="path",
-     *         required=true,
-     *         description="ID của danh mục",
-     *         @OA\Schema(type="integer")
-     *     ),
-     *     @OA\Response(response=200, description="Thông tin danh mục"),
-     *     @OA\Response(response=404, description="Không tìm thấy danh mục"),
-     * )
-     */
-
-    public function show($id)
-    {
-        $category = Category::find($id);
-
-        if (!$category) {
-            return response()->json(['message' => 'Không tìm thấy danh mục'], 404);
-        }
-
-        $posts = $category->posts;
-
-        return response()->json(['category' => $category, 'posts' => $posts], 200);
-    }
-
     /**
      * @OA\Put(
      *     path="/api/v1/categories/{id}",
-     *     summary="Cập nhật danh mục",
+     *     summary="Cập nhật danh mục theo ID",
      *     operationId="updateCategory",
      *     tags={"Categories"},
      *     @OA\Parameter(
@@ -101,7 +94,8 @@ class CategoryController extends Controller
      *     @OA\RequestBody(
      *         required=true,
      *         @OA\JsonContent(
-     *             @OA\Property(property="name", type="string", example="Danh mục cập nhật")
+     *             @OA\Property(property="name", type="string", description="Tên của danh mục"),
+     *             @OA\Property(property="parent_id", type="integer", description="ID của danh mục cha (nếu có)"),
      *         )
      *     ),
      *     @OA\Response(response=200, description="Danh mục đã được cập nhật"),
@@ -111,27 +105,21 @@ class CategoryController extends Controller
 
     public function update(Request $request, $id)
     {
-        $validatedData = $request->validate([
-            'name' => 'string|unique:categories,name,' . $id,
-        ]);
-
         $category = Category::find($id);
-
         if (!$category) {
-            return response()->json(['message' => 'Không tìm thấy danh mục'], 404);
+            return response()->json(['message' => 'Category not found'], 404);
         }
 
-        $category->name = $validatedData['name'];
+        $category->name = $request->input('name');
+        $category->parent_id = $request->input('parent_id');
         $category->save();
 
-        return response()->json(['message' => 'Danh mục đã được cập nhật!', 'category' => $category], 200);
+        return response()->json($category);
     }
-
-
     /**
      * @OA\Delete(
      *     path="/api/v1/categories/{id}",
-     *     summary="Xóa danh mục",
+     *     summary="Xóa danh mục theo ID",
      *     operationId="deleteCategory",
      *     tags={"Categories"},
      *     @OA\Parameter(
@@ -141,21 +129,75 @@ class CategoryController extends Controller
      *         description="ID của danh mục",
      *         @OA\Schema(type="integer")
      *     ),
-     *     @OA\Response(response=204, description="Danh mục đã được xóa thành công"),
+     *     @OA\Response(response=204, description="Danh mục đã được xóa"),
      *     @OA\Response(response=404, description="Không tìm thấy danh mục"),
      * )
      */
     public function destroy($id)
     {
         $category = Category::find($id);
-
         if (!$category) {
-            return response()->json(['message' => 'Không tìm thấy danh mục'], 404);
+            return response()->json(['message' => 'Category not found'], 404);
         }
-        Category_post::where('category_id', $id)->delete();
 
         $category->delete();
 
-        return response()->json(['message' => 'Danh mục đã được xóa thành công'], 204);
+        return response()->json([], 204);
     }
+    /**
+     * @OA\Get(
+     *     path="/api/v1/parent-categories",
+     *     summary="Lấy danh sách các danh mục cha",
+     *     operationId="getParentCategories",
+     *     tags={"Categories"},
+     *     @OA\Response(response=200, description="Danh sách các danh mục cha"),
+     * )
+     */
+    public function getParentCategory()
+    {
+        $categories = Category::where('parent_id', 0)->get();
+        foreach ($categories as $category) {
+            $category->subcategories = Category::where('parent_id', $category->id)->get();
+        }
+        return response()->json(['data' => $categories]);
+    }
+    /**
+     * @OA\Get(
+     *     path="/api/v1/sub-categories/{id}",
+     *     summary="Lấy danh sách các danh mục con dựa trên ID danh mục cha",
+     *     operationId="getSubCategories",
+     *     tags={"Categories"},
+     *     @OA\Parameter(
+     *         name="id",
+     *         in="path",
+     *         required=true,
+     *         description="ID của danh mục cha",
+     *         @OA\Schema(type="integer")
+     *     ),
+     *     @OA\Response(response=200, description="Danh sách các danh mục con"),
+     * )
+     */
+    public function getSubCategory($id)
+    {
+        $subcategories = Category::where('parent_id', $id)->get();
+        return response()->json(['data' => $subcategories]);
+    }
+    /**
+     * @OA\Get(
+     *     path="/api/v1/all-categories-with-subcategories",
+     *     summary="Lấy danh sách tất cả các danh mục với danh mục con",
+     *     operationId="getAllCategoriesWithSubcategories",
+     *     tags={"Categories"},
+     *     @OA\Response(response=200, description="Danh sách tất cả các danh mục với danh mục con"),
+     * )
+     */
+    public function getAllCategoriesWithSubcategories()
+    {
+        $categories = Category::where('parent_id', 0)->get();
+        foreach ($categories as $category) {
+            $category->subcategories = Category::where('parent_id', $category->id)->get();
+        }
+        return response()->json(['data' => $categories]);
+    }
+
 }

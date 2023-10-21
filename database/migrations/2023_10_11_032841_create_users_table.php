@@ -19,7 +19,7 @@ return new class extends Migration
             $table->string('password');
             $table->string('image');
             $table->string('phone');
-            $table->string('role')->default('root2');
+            $table->string('role')->default('admin');
             $table->string('status')->default('active');
             $table->softDeletes();
             $table->rememberToken();

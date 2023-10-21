@@ -260,11 +260,11 @@
                 "tags": [
                     "Categories"
                 ],
-                "summary": "Lấy danh sách các danh mục",
+                "summary": "Lấy danh sách tất cả các danh mục",
                 "operationId": "getCategories",
                 "responses": {
                     "200": {
-                        "description": "Danh sách các danh mục"
+                        "description": "Danh sách tất cả các danh mục"
                     }
                 }
             },
@@ -281,8 +281,12 @@
                             "schema": {
                                 "properties": {
                                     "name": {
-                                        "type": "string",
-                                        "example": "Danh mục mới"
+                                        "description": "Tên của danh mục",
+                                        "type": "string"
+                                    },
+                                    "parent_id": {
+                                        "description": "ID của danh mục cha (nếu có)",
+                                        "type": "integer"
                                     }
                                 },
                                 "type": "object"
@@ -302,7 +306,7 @@
                 "tags": [
                     "Categories"
                 ],
-                "summary": "Lấy thông tin danh mục",
+                "summary": "Lấy thông tin của danh mục theo ID",
                 "operationId": "getCategory",
                 "parameters": [
                     {
@@ -317,7 +321,7 @@
                 ],
                 "responses": {
                     "200": {
-                        "description": "Thông tin danh mục"
+                        "description": "Thông tin của danh mục"
                     },
                     "404": {
                         "description": "Không tìm thấy danh mục"
@@ -328,7 +332,7 @@
                 "tags": [
                     "Categories"
                 ],
-                "summary": "Cập nhật danh mục",
+                "summary": "Cập nhật danh mục theo ID",
                 "operationId": "updateCategory",
                 "parameters": [
                     {
@@ -348,8 +352,12 @@
                             "schema": {
                                 "properties": {
                                     "name": {
-                                        "type": "string",
-                                        "example": "Danh mục cập nhật"
+                                        "description": "Tên của danh mục",
+                                        "type": "string"
+                                    },
+                                    "parent_id": {
+                                        "description": "ID của danh mục cha (nếu có)",
+                                        "type": "integer"
                                     }
                                 },
                                 "type": "object"
@@ -370,7 +378,7 @@
                 "tags": [
                     "Categories"
                 ],
-                "summary": "Xóa danh mục",
+                "summary": "Xóa danh mục theo ID",
                 "operationId": "deleteCategory",
                 "parameters": [
                     {
@@ -385,10 +393,63 @@
                 ],
                 "responses": {
                     "204": {
-                        "description": "Danh mục đã được xóa thành công"
+                        "description": "Danh mục đã được xóa"
                     },
                     "404": {
                         "description": "Không tìm thấy danh mục"
+                    }
+                }
+            }
+        },
+        "/api/v1/parent-categories": {
+            "get": {
+                "tags": [
+                    "Categories"
+                ],
+                "summary": "Lấy danh sách các danh mục cha",
+                "operationId": "getParentCategories",
+                "responses": {
+                    "200": {
+                        "description": "Danh sách các danh mục cha"
+                    }
+                }
+            }
+        },
+        "/api/v1/sub-categories/{id}": {
+            "get": {
+                "tags": [
+                    "Categories"
+                ],
+                "summary": "Lấy danh sách các danh mục con dựa trên ID danh mục cha",
+                "operationId": "getSubCategories",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "ID của danh mục cha",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Danh sách các danh mục con"
+                    }
+                }
+            }
+        },
+        "/api/v1/all-categories-with-subcategories": {
+            "get": {
+                "tags": [
+                    "Categories"
+                ],
+                "summary": "Lấy danh sách tất cả các danh mục với danh mục con",
+                "operationId": "getAllCategoriesWithSubcategories",
+                "responses": {
+                    "200": {
+                        "description": "Danh sách tất cả các danh mục với danh mục con"
                     }
                 }
             }
@@ -426,7 +487,7 @@
                 }
             }
         },
-        "/api/v1/posts": {
+        "/api/v1/post": {
             "get": {
                 "tags": [
                     "Posts"
@@ -483,7 +544,7 @@
                 }
             }
         },
-        "/api/v1/posts/{id}": {
+        "/api/v1/post/{id}": {
             "get": {
                 "tags": [
                     "Posts"
@@ -593,173 +654,6 @@
                 }
             }
         },
-        "/api/v1/subcategories": {
-            "get": {
-                "tags": [
-                    "Subcategories"
-                ],
-                "summary": "Hiển thị danh sách các mục con (subcategories)",
-                "operationId": "getSubcategories",
-                "responses": {
-                    "200": {
-                        "description": "Danh sách các mục con (subcategories)"
-                    }
-                }
-            },
-            "post": {
-                "tags": [
-                    "Subcategories"
-                ],
-                "summary": "Lưu một mục con (subcategory) mới vào cơ sở dữ liệu",
-                "operationId": "createSubcategory",
-                "requestBody": {
-                    "required": true,
-                    "content": {
-                        "application/json": {
-                            "schema": {
-                                "properties": {
-                                    "name": {
-                                        "type": "string"
-                                    },
-                                    "category_id": {
-                                        "type": "integer"
-                                    }
-                                },
-                                "type": "object"
-                            }
-                        }
-                    }
-                },
-                "responses": {
-                    "201": {
-                        "description": "Mục con (subcategory) mới đã được tạo"
-                    }
-                }
-            }
-        },
-        "/api/v1/subcategories/{id}": {
-            "get": {
-                "tags": [
-                    "Subcategories"
-                ],
-                "summary": "Hiển thị thông tin một mục con cụ thể",
-                "operationId": "showSubcategory",
-                "parameters": [
-                    {
-                        "name": "id",
-                        "in": "path",
-                        "description": "ID của mục con",
-                        "required": true,
-                        "schema": {
-                            "type": "string"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "Thông tin mục con"
-                    },
-                    "404": {
-                        "description": "Không tìm thấy mục con"
-                    }
-                }
-            },
-            "put": {
-                "tags": [
-                    "Subcategories"
-                ],
-                "summary": "Cập nhật thông tin một mục con",
-                "operationId": "updateSubcategory",
-                "parameters": [
-                    {
-                        "name": "id",
-                        "in": "path",
-                        "description": "ID của mục con (subcategory)",
-                        "required": true,
-                        "schema": {
-                            "type": "string"
-                        }
-                    }
-                ],
-                "requestBody": {
-                    "required": true,
-                    "content": {
-                        "application/json": {
-                            "schema": {
-                                "properties": {
-                                    "name": {
-                                        "type": "string"
-                                    },
-                                    "category_id": {
-                                        "type": "integer"
-                                    }
-                                },
-                                "type": "object"
-                            }
-                        }
-                    }
-                },
-                "responses": {
-                    "200": {
-                        "description": "Thông tin mục con đã được cập nhật"
-                    },
-                    "404": {
-                        "description": "Không tìm thấy mục con"
-                    }
-                }
-            },
-            "delete": {
-                "tags": [
-                    "Subcategories"
-                ],
-                "summary": "Xóa một mục con khỏi cơ sở dữ liệu",
-                "operationId": "deleteSubcategory",
-                "parameters": [
-                    {
-                        "name": "id",
-                        "in": "path",
-                        "description": "ID của mục con (subcategory)",
-                        "required": true,
-                        "schema": {
-                            "type": "string"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "Mục con đã bị xóa"
-                    },
-                    "404": {
-                        "description": "Không tìm thấy mục con"
-                    }
-                }
-            }
-        },
-        "/api/v1/subcategories/{category_id}": {
-            "get": {
-                "tags": [
-                    "Subcategories"
-                ],
-                "summary": "Lấy danh sách mục con theo ID của danh mục cha",
-                "operationId": "getSubcategoriesByCategoryId",
-                "parameters": [
-                    {
-                        "name": "category_id",
-                        "in": "path",
-                        "description": "ID của danh mục cha",
-                        "required": true,
-                        "schema": {
-                            "type": "integer"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "Danh sách các mục con theo danh mục cha"
-                    }
-                }
-            }
-        },
         "/api/v1/update-status/user": {
             "post": {
                 "tags": [
@@ -792,7 +686,39 @@
                 }
             }
         },
-        "/api/v1/users": {
+        "/api/v1/update-status/post": {
+            "post": {
+                "tags": [
+                    "User Status"
+                ],
+                "summary": "Cập nhật trạng thái của bài viết (active/inactive)",
+                "operationId": "updatePostStatus",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "id": {
+                                        "type": "integer"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Trạng thái bài viết đã được cập nhật"
+                    },
+                    "404": {
+                        "description": "Không tìm thấy bài viết"
+                    }
+                }
+            }
+        },
+        "/api/v1/user": {
             "get": {
                 "tags": [
                     "Users"
@@ -853,7 +779,7 @@
                 }
             }
         },
-        "/api/v1/users/{id}": {
+        "/api/v1/user/{id}": {
             "get": {
                 "tags": [
                     "Users"

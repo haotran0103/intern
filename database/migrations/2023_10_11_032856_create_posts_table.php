@@ -19,10 +19,11 @@ return new class extends Migration
             $table->string('serial_number');
             $table->string('Issuance_date');
             $table->unsignedBigInteger('user_id');
-            $table->unsignedBigInteger('subcategory_id');
+            $table->unsignedBigInteger('category_id');
             $table->timestamps();
             $table->foreign('user_id')->references('id')->on('users');
-            $table->foreign('subcategory_id')->references('id')->on('subcategories');
+            $table->foreign('category_id')->references('id')->on('categories');
+            $table->string('status');
             $table->softDeletes();
         });
     }

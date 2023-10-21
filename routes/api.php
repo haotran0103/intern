@@ -34,47 +34,43 @@ Route::prefix('v1')->group(function () {
     Route::resource('user', UserController::class);
     Route::resource('post', PostController::class);
     Route::resource('category', CategoryController::class);
-    Route::resource('subcategory', SubCategoryController::class);
 
     Route::post('/userStatus', [UpdateStatusController::class, 'userStatus']);
     Route::post('/postStatus', [UpdateStatusController::class, 'postStatus']);
+    Route::post('/getParentCategory', [CategoryController::class, 'getParentCategory']);
+    Route::post('/getSubCategory', [CategoryController::class, 'getSubCategory']);
+    Route::post('/getAllCategoriesWithSubcategories', [CategoryController::class, 'getAllCategoriesWithSubcategories']);
+    Route::get('/postByCategory/{id}', [PostController::class, 'search']);
+    Route::post('/permanentlyDeleteUser', [UserController::class, 'permanentlyDeleteUser']);
     Route::post('/upload-images', [ImageController::class, 'uploadImage']);
-    Route::get('/subcategories/{category_id}', [SubCategoryController::class , 'getSubcategoriesByCategoryId']);
-
-
-
     /**
      * @OA\Post(
-     *     path="/api/v1/login",
-     *     summary="Authenticate a user",
-     *     operationId="login",
+     *     path="/api/v1/register",
+     *     summary="Register a new user",
+     *     operationId="register",
      *     tags={"Authentication"},
      *     @OA\RequestBody(
-     *         description="User credentials",
+     *         description="User registration details",
      *         required=true,
      *         @OA\JsonContent(
+     *             @OA\Property(property="name", type="string", example="John Doe"),
      *             @OA\Property(property="email", type="string", format="email", example="user@example.com"),
-     *             @OA\Property(property="password", type="string", example="password")
+     *             @OA\Property(property="password", type="string", example="password"),
+     *             @OA\Property(property="phone", type="string", example="1234567890"),
+     *             @OA\Property(property="image", type="string", format="binary")
      *         )
      *     ),
      *     @OA\Response(
      *         response=200,
-     *         description="Successful login",
+     *         description="User registration successful",
      *         @OA\JsonContent(
      *             @OA\Property(property="status", type="string", example="success"),
+     *             @OA.Property(property="message", type="string", example="User created successfully"),
      *             @OA\Property(property="user", type="object"),
-     *             @OA\Property(property="authorization", type="object",
+     *             @OA.Property(property="authorization", type="object",
      *                 @OA\Property(property="token", type="string", example="your_jwt_token"),
-     *                 @OA\Property(property="type", type="string", example="bearer")
+     *                 @OA.Property(property="type", type="string", example="bearer")
      *             )
-     *         )
-     *     ),
-     *     @OA\Response(
-     *         response=401,
-     *         description="Unauthorized",
-     *         @OA\JsonContent(
-     *             @OA\Property(property="status", type="string", example="error"),
-     *             @OA\Property(property="message", type="string", example="Unauthorized")
      *         )
      *     )
      * )
@@ -113,7 +109,7 @@ Route::prefix('v1')->group(function () {
      *     )
      * )
      */
-    Route::post('register', [AuthController::class, 'register']);
+    Route::middleware(['CheckRootRole'])->post('register', [AuthController::class, 'register']);
     /**
      * @OA\Post(
      *     path="/api/v1/logout",

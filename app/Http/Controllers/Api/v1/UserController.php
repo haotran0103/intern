@@ -198,11 +198,11 @@ class UserController extends Controller
     {
         $user = User::find($id);
 
-        if (!$user) {
-            return response()->json(['message' => 'Không tìm thấy người dùng'], 404);
+        if ($user) {
+            $user->forceDelete();
+            return response()->json(['message' => 'success']);
+        } else {
+            return response()->json(['message' => 'success'], 404);
         }
-        $user->delete();
-
-        return response()->json(['message' => 'success']);
     }
 }

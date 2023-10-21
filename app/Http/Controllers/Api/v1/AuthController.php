@@ -128,17 +128,26 @@ class AuthController extends Controller
      */
     public function register(Request $request)
     {
-        $request->validate([
-            'email' => 'required|string|email',
+        $validationRules = [
+            'email' => 'required|string|email|unique:users,email',
             'name' => 'required|string',
             'password' => 'required|string',
             'phone' => 'required|string',
-        ]);
+        ];
+
+        $customMessages = [
+            'required' => ':attribute không được để trống.',
+            'unique' => ':attribute đã tồn tại trong hệ thống.',
+            'email' => 'Định dạng của :attribute không hợp lệ.',
+        ];
+
+        $validatedData = $request->validate($validationRules, $customMessages);
+
         $user = new User();
-        $user->email = $request->input('email');
-        $user->name = $request->input('name');
-        $user->password = bcrypt($request->password);
-        $user->phone = $request->phone;
+        $user->email = $validatedData['email'];
+        $user->name = $validatedData['name'];
+        $user->password = bcrypt($validatedData['password']);
+        $user->phone = $validatedData['phone'];
         if ($request->hasFile('image')) {
             $image = $request->file('image');
             $imageName = time() . '.' . $image->getClientOriginalExtension();
