@@ -136,9 +136,9 @@ class AuthController extends Controller
         ];
 
         $customMessages = [
-            'required' => ':attribute không được để trống.',
-            'unique' => ':attribute đã tồn tại trong hệ thống.',
-            'email' => 'Định dạng của :attribute không hợp lệ.',
+            'required' => ':attribute dont empty.',
+            'unique' => ':attribute has already been taken.',
+            'email' => 'The format of :attribute is invalid.',
         ];
 
         $validatedData = $request->validate($validationRules, $customMessages);

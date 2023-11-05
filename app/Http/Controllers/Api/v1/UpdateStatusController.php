@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api\v1;
 
 use App\Http\Controllers\Controller;
+use App\Models\Banner_image;
 use App\Models\Post;
 use App\Models\post_history;
 use App\Models\User;
@@ -86,18 +87,45 @@ class UpdateStatusController extends Controller
         }
 
         $post->save();
-
+        $user_id = $request->user_id ?? 1;
         post_history::create([
             'post_id' => $post->id,
-            'old_data' => json_encode($oldPostData),
-            'new_data' => json_encode($post->toArray()),
+            'user_id' => $user_id,
+            'action'  =>'change status',
+            'action_time' => now(),
+            'previous_data' => json_encode($oldPostData),
+            'updated_data' => json_encode($post->toArray()),
         ]);
         user_activity::create([
-            'user_id' => $post->user_id,
-            'activity' => 'Updated post status',
-            'description' => 'Updated post status to ' . $post->status,
+            'user_id' => $user_id,
+            'activity_type' => 'Updated post status to ' . $post->status,
+            'activity_time' => now()
         ]);
 
         return response()->json(['message' => 'success']);
     }
+    public function bannerStatus(Request $request)
+    {
+        $banner = Banner_image::find($request->id);
+
+        if (!$banner) {
+            return response()->json(['message' => 'Không tìm thấy người dùng'], 404);
+        }
+
+        if ($banner->status === 'active') {
+            $banner->status = 'inactive';
+        } else {
+            $banner->status = 'active';
+        }
+        $user_id = $request->user_id ?? 1;
+        user_activity::create([
+            'user_id' => $user_id,
+            'activity_type' => 'Updated banner status to ' . $banner->status,
+            'activity_time' => now()
+        ]);
+        $banner->save();
+
+        return response()->json(['message' => 'success']);
+    }
+    
 }

@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api\v1;
 
 use App\Http\Controllers\Controller;
 use App\Models\Category;
+use App\Models\user_activity;
 use Illuminate\Http\Request;
 
 class CategoryController extends Controller
@@ -25,9 +26,20 @@ class CategoryController extends Controller
      */
     public function index()
     {
-        $categories = Category::all();
-        return response()->json($categories);
+        $categories = Category::select('categories.id', 'categories.name','parent.name as parent_name', 'parent.id as parent_id', 'categories.created_at', 'categories.updated_at')
+        ->leftJoin('categories as parent', 'categories.parent_id', '=', 'parent.id')
+        ->get(); 
+        $categories = $categories->map(function ($category) {
+            if ($category->parent_name === 0) {
+                $category->parent_name = '';
+            }
+            return $category;
+        });
+
+        return response()->json(['message' => 'success', 'data' => $categories]);
     }
+
+
     /**
      * @OA\Get(
      *     path="/api/v1/categories/{id}",
@@ -51,7 +63,7 @@ class CategoryController extends Controller
         if (!$category) {
             return response()->json(['message' => 'Category not found'], 404);
         }
-        return response()->json($category);
+        return response()->json(['message' => 'success', 'data' => $category]);
     }
     /**
      * @OA\Post(
@@ -73,10 +85,12 @@ class CategoryController extends Controller
     {
         $category = new Category();
         $category->name = $request->input('name');
-        $category->parent_id = $request->input('parent_id');
+        if($request->has('parent_id')){
+            $category->parent_id = $request->input('parent_id');
+        }
         $category->save();
 
-        return response()->json($category, 201);
+        return response()->json(['message' => 'success','data'=>$category], 201);
     }
     /**
      * @OA\Put(
@@ -112,9 +126,15 @@ class CategoryController extends Controller
 
         $category->name = $request->input('name');
         $category->parent_id = $request->input('parent_id');
+        $user_id = $request->user_id ?? 1;  
+        user_activity::create([
+            'user_id' => $user_id,
+            'activity_type' => 'Updated banner status to ' . $category->name. ' ,'. $category->parent_id,
+            'activity_time' => now()
+        ]);
         $category->save();
 
-        return response()->json($category);
+        return response()->json(['message' => 'success','data'=>$category]);
     }
     /**
      * @OA\Delete(
@@ -142,7 +162,7 @@ class CategoryController extends Controller
 
         $category->delete();
 
-        return response()->json([], 204);
+        return response()->json(['message'=>'success'], 204);
     }
     /**
      * @OA\Get(
@@ -159,7 +179,7 @@ class CategoryController extends Controller
         foreach ($categories as $category) {
             $category->subcategories = Category::where('parent_id', $category->id)->get();
         }
-        return response()->json(['data' => $categories]);
+        return response()->json(['message' => 'success','data' => $categories]);
     }
     /**
      * @OA\Get(
@@ -180,7 +200,7 @@ class CategoryController extends Controller
     public function getSubCategory($id)
     {
         $subcategories = Category::where('parent_id', $id)->get();
-        return response()->json(['data' => $subcategories]);
+        return response()->json(['message' => 'success','data' => $subcategories]);
     }
     /**
      * @OA\Get(
@@ -197,7 +217,7 @@ class CategoryController extends Controller
         foreach ($categories as $category) {
             $category->subcategories = Category::where('parent_id', $category->id)->get();
         }
-        return response()->json(['data' => $categories]);
+        return response()->json(['message' => 'success','data' => $categories]);
     }
 
 }

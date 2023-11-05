@@ -47,7 +47,7 @@ class UserController extends Controller
 
                 ];
             });
-            return response()->json(['data' => $usersWithImageUrls]);
+            return response()->json(['message'=>'success','data' => $usersWithImageUrls]);
         } catch (\Exception $e) {
             Log::error($e->getMessage());
             return response()->json(['error' => 'An error occurred'], 500);
@@ -199,7 +199,7 @@ class UserController extends Controller
         $user = User::find($id);
 
         if ($user) {
-            $user->forceDelete();
+            $user->delete();
             return response()->json(['message' => 'success']);
         } else {
             return response()->json(['message' => 'success'], 404);

@@ -3,13 +3,15 @@
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\v1\CategoryController;
-use App\Http\Controllers\Api\v1\PostCategorieController;
 use App\Http\Controllers\Api\v1\PostController;
 use App\Http\Controllers\Api\v1\AuthController;
 use App\Http\Controllers\Api\v1\UserController;
 use App\Http\Controllers\Api\v1\ImageController;
 use App\Http\Controllers\Api\v1\UpdateStatusController;
-use App\Http\Controllers\Api\v1\SubCategoryController;
+use App\Http\Controllers\Api\v1\SettingController;
+use App\Http\Controllers\Api\v1\BannerImagesController;
+use App\Http\Controllers\Api\v1\HistoryController;
+use App\Http\Controllers\Api\v1\TrashController;
 /*
 |--------------------------------------------------------------------------
 | API Routes
@@ -34,15 +36,39 @@ Route::prefix('v1')->group(function () {
     Route::resource('user', UserController::class);
     Route::resource('post', PostController::class);
     Route::resource('category', CategoryController::class);
+    Route::resource('bannerImages', BannerImagesController::class);
+
 
     Route::post('/userStatus', [UpdateStatusController::class, 'userStatus']);
     Route::post('/postStatus', [UpdateStatusController::class, 'postStatus']);
-    Route::post('/getParentCategory', [CategoryController::class, 'getParentCategory']);
-    Route::post('/getSubCategory', [CategoryController::class, 'getSubCategory']);
-    Route::post('/getAllCategoriesWithSubcategories', [CategoryController::class, 'getAllCategoriesWithSubcategories']);
-    Route::get('/postByCategory/{id}', [PostController::class, 'search']);
+    Route::post('/bannerStatus', [UpdateStatusController::class, 'bannerStatus']);
+
+    Route::get('/trashed-posts', [TrashController::class, 'getTrashedPosts']);
+    Route::put('/restore-posts/{id}', [TrashController::class, 'restoreTrashedPost']);
+    Route::get('/trashed', [TrashController::class, 'getTrashedUser']);
+    Route::put('/restore/{id}', [TrashController::class, 'restoreTrashedUser']);
+
+    Route::get('/getBanner', [BannerImagesController::class, 'getAll']);
+
+    Route::get('/post_history', [HistoryController::class, 'post_history']);
+    Route::get('/user_history', [HistoryController::class, 'user_history']);
+
+    Route::get('/getParentCategory', [CategoryController::class, 'getParentCategory']);
+    Route::get('/getSubCategory/{id}', [CategoryController::class, 'getSubCategory']);
+    Route::get('/getAllCategoriesWithSubcategories', [CategoryController::class, 'getAllCategoriesWithSubcategories']);
+    
+    Route::get('/postByCategory/{id}', [PostController::class, 'getAllbyCategory']);
+    Route::post('/uploadPostFile', [PostController::class, 'uploadPostFile']);
+
     Route::post('/permanentlyDeleteUser', [UserController::class, 'permanentlyDeleteUser']);
-    Route::post('/upload-images', [ImageController::class, 'uploadImage']);
+
+    Route::post('/upload-images', [ImageController::class, 'uploadImagePost']);
+    Route::post('/banner-images', [ImageController::class, 'uploadImageBanner']);
+    Route::get('/clearTempImages', [ImageController::class, 'clearTempImages']);
+    Route::post('/remove-image', [ImageController::class, 'removeImage']);
+
+    Route::get('/ReadSetting', [SettingController::class, 'ReadSetting']);
+    Route::post('/UpdateSetting', [SettingController::class, 'UpdateSetting']);
     /**
      * @OA\Post(
      *     path="/api/v1/register",
@@ -109,7 +135,7 @@ Route::prefix('v1')->group(function () {
      *     )
      * )
      */
-    Route::middleware(['CheckRootRole'])->post('register', [AuthController::class, 'register']);
+    Route::post('register', [AuthController::class, 'register']);
     /**
      * @OA\Post(
      *     path="/api/v1/logout",

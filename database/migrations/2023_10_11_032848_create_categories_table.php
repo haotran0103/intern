@@ -15,9 +15,6 @@ return new class extends Migration
             $table->id();
             $table->string('name');
             $table->unsignedBigInteger('parent_id')->default(0);
-
-            $table->foreign('parent_id')->references('id')->on('categories');
-
             $table->timestamps();
         });
     }

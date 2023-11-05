@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Api\v1;
 
+use App\Models\Category;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
 use App\Models\Post; // Import model Post
@@ -28,11 +29,13 @@ class PostController extends Controller
      */
     public function index()
     {
-        $posts = Post::select('posts.id','title','content', 'categories.name as category_name',  'serial_number', 'Issuance_date', 'posts.created_at', 'posts.updated_at', 'images', 'posts.status')
+        $posts = Post::select('posts.id', 'title', 'content', 'categories.name as category_name', 'categories.parent_id', 'serial_number', 'Issuance_date', 'posts.category_id', 'posts.created_at', 'posts.updated_at', 'images', 'posts.status','posts.view', 'file', 'parent.name as parent_name')
         ->join('categories', 'posts.category_id', '=', 'categories.id')
+        ->leftJoin('categories as parent', 'categories.parent_id', '=', 'parent.id')
         ->get();
 
         return response()->json(['message' => 'success', 'data' => $posts], 200);
+
     }
     /**
      * @OA\Post(
@@ -56,35 +59,42 @@ class PostController extends Controller
      */
     public function store(Request $request)
     {
-
         $post = new Post;
         $post->title = $request->input('title');
         $post->content = $request->input('content');
+
         if ($request->hasFile('image')) {
             $image = $request->file('image');
             $imageName = time() . '.' . $image->getClientOriginalExtension();
             $image->move(public_path('/uploads/postImage/'), $imageName);
             $post->images = '/uploads/postImage/' . $imageName;
         }
+
         if ($request->has('serial_number')) {
             $post->serial_number = $request->input('serial_number');
         }
+
         if ($request->has('Issuance_date')) {
             $post->Issuance_date = $request->input('Issuance_date');
         }
-        $post->subcategory_id = $request->input('subcategory_id');
+
+        $post->category_id = $request->input('category_id');
         $post->user_id = $request->input('user_id');
 
+        $files = $request->input('file');
+        $post->file = $files;
+
         $post->save();
+
         $userActivity = new user_activity();
         $userActivity->user_id = $request->input('user_id');
-        $userActivity->activity = 'created';
-        $userActivity->activity_type = 'post';
-        $userActivity->activity_id = $post->id;
+        $userActivity->activity_type = 'created post';
+        $userActivity->activity_time = now();
         $userActivity->save();
 
         return response()->json(['message' => 'success', 'post' => $post], 201);
     }
+
     /**
      * @OA\Get(
      *     path="/api/v1/post/{id}",
@@ -104,16 +114,17 @@ class PostController extends Controller
      */
     public function show(string $id)
     {
-        $posts = Post::select('posts.id', 'title', 'content', 'categories.name as category_name', 'serial_number', 'Issuance_date', 'posts.created_at', 'posts.updated_at', 'images', 'status')
+        $post = Post::select('posts.id', 'title', 'content', 'categories.name as category_name', 'serial_number','file', 'Issuance_date', 'posts.created_at', 'posts.updated_at', 'images', 'status')
         ->join('categories', 'posts.category_id', '=', 'categories.id')
-        ->where('categories.id', $id)
-            ->get();
-        if (!$posts) {
+        ->where('posts.id', $id)
+            ->first(); 
+        if (!$post) {
             return response()->json(['message' => 'error'], 404);
         }
 
-        return response()->json(['message' => 'success', 'data' => $posts], 200);
+        return response()->json(['message' => 'success', 'data' => $post], 200);
     }
+
 
     /**
      * @OA\Put(
@@ -147,44 +158,61 @@ class PostController extends Controller
         $post = Post::find($id);
 
         if (!$post) {
-            return response()->json(['message' => 'Không tìm thấy người dùng'], 404);
+            return response()->json(['message' => 'Không tìm thấy bài viết'], 404);
         }
         $post->title = $request->input('title');
         $post->content = $request->input('content');
+
         if ($request->hasFile('image')) {
             $image = $request->file('image');
             $imageName = time() . '.' . $image->getClientOriginalExtension();
             $image->move(public_path('/uploads/postImage/'), $imageName);
             $post->images = '/uploads/postImage/' . $imageName;
+        } else {
+            if ($request->has('imagelink')) {
+                $post->images = $request->input('imagelink');
+            } else {
+                $post->images = null;
+            }
         }
-        if ($request->has('serial_number')) {
-            $post->serial_number = $request->input('serial_number');
+
+        $oldFiles = Post::findOrFail($id)->files;
+        $files = $request->input('file');
+        $post->file = $files;
+
+        if ($oldFiles) {
+                $filesToDelete = array_diff($oldFiles, $files);
+            } else {
+                $filesToDelete = null;
+            }
+        if ($filesToDelete !== null) {
+            foreach ($filesToDelete as $fileToDelete) {
+                if (file_exists(public_path($fileToDelete))) {
+                    unlink(public_path($fileToDelete));
+                }
+            }
         }
-        if ($request->has('Issuance_date')) {
-            $post->Issuance_date = $request->input('Issuance_date');
-        }
-        $post->subcategory_id = $request->input('subcategory_id');
-        $post->user_id = $request->input('user_id');
-        $post->save();
+
         $previousData = $post->toArray();
         $userActivity = new user_activity();
         $userActivity->user_id = $request->input('user_id');
-        $userActivity->activity = 'updated';
-        $userActivity->activity_type = 'post';
-        $userActivity->activity_id = $post->id;
+        $userActivity->activity_type = 'updated';
+        $userActivity->activity_time = now();
         $userActivity->save();
 
-        // Lưu lịch sử bài viết
         $postHistory = new post_history();
         $postHistory->post_id = $post->id;
         $postHistory->user_id = $request->input('user_id');
         $postHistory->previous_data = json_encode($previousData);
-        $postHistory->updated_data = json_encode($post->toArray());
+        $postHistory->updated_data = json_encode([$post]);
+        $postHistory->action = 'updated post';
         $postHistory->save();
 
-        return response()->json(['message' => 'success', 'post' => $post], 200);
+        $post->save();
 
+        return response()->json(['message' => 'success', 'post' => $post], 200);
     }
+
     /**
      * @OA\Delete(
      *     path="/api/v1/post/{id}",
@@ -213,19 +241,58 @@ class PostController extends Controller
         $postHistory->post_id = $post->id;
         $postHistory->user_id = $post->user_id;
         $postHistory->previous_data = json_encode($post->toArray());
-        $postHistory->deleted_at = now();
+        $postHistory->action = 'deleted';
         $postHistory->save();
 
-        // Ghi lịch sử hoạt động của người dùng
         $userActivity = new user_activity();
         $userActivity->user_id = $post->user_id;
-        $userActivity->activity = 'deleted';
-        $userActivity->activity_type = 'post';
-        $userActivity->activity_id = $post->id;
+        $userActivity->activity_type = 'deleted';
+        $userActivity->activity_time = now();
         $userActivity->save();
 
         $post->delete();
 
         return response()->json(['message' => 'success']);
     }
+
+    public function uploadPostFile(Request $request)
+    {
+        $uploadPath = public_path('uploads/filePost');
+
+        if ($request->hasFile('files')) {
+            $uploadedFile = $request->file('files');
+            if (!file_exists($uploadPath)) {
+                mkdir($uploadPath, 0755, true);
+            }
+            $originalName = $uploadedFile->getClientOriginalName();
+            $extension = $uploadedFile->getClientOriginalExtension();
+            $fileName = pathinfo($originalName, PATHINFO_FILENAME);
+            $newFileName = "{$fileName}.{$extension}";
+            $uploadedFile->move($uploadPath, $originalName);
+            $filesUrl = '/uploads/filePost/' . $newFileName;
+
+            return response()->json(['message' => 'success', 'data' => $filesUrl]);
+        }
+        return response()->json(['message' => 'No valid files to upload', 'data' => []], 400);
+    }
+    public function getAllbyCategory($id)
+    {
+        $category = Category::find($id);
+
+        if (!$category) {
+            return response()->json(['message' => 'Category not found'], 404);
+        }
+
+        $posts = Post::select('posts.id', 'title', 'content', 'categories.name as category_name', 'serial_number', 'Issuance_date', 'posts.created_at', 'posts.updated_at', 'file', 'images', 'status')
+            ->join('categories', 'posts.category_id', '=', 'categories.id')
+            ->where(function ($query) use ($category) {
+                $query->where('posts.category_id', $category->id)
+                    ->orWhere('categories.parent_id', $category->id);
+            })
+            ->get();
+
+        return response()->json(['message' => 'success', 'data' => $posts], 200);
+    }
+
+
 }
