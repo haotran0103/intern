@@ -12,6 +12,7 @@ use App\Http\Controllers\Api\v1\SettingController;
 use App\Http\Controllers\Api\v1\BannerImagesController;
 use App\Http\Controllers\Api\v1\HistoryController;
 use App\Http\Controllers\Api\v1\TrashController;
+use App\Http\Controllers\Api\v1\ChatController;
 /*
 |--------------------------------------------------------------------------
 | API Routes
@@ -38,6 +39,8 @@ Route::prefix('v1')->group(function () {
     Route::resource('category', CategoryController::class);
     Route::resource('bannerImages', BannerImagesController::class);
 
+    Route::get('messages', [ChatController::class, 'getMessages']);
+    Route::post('send', [ChatController::class, 'sendMessage']);
 
     Route::post('/userStatus', [UpdateStatusController::class, 'userStatus']);
     Route::post('/postStatus', [UpdateStatusController::class, 'postStatus']);

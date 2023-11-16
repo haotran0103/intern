@@ -15,11 +15,11 @@ return [
     |
     */
 
-    'paths' => ['*'],   
+    'paths' => ['*','sanctum/csrf-cookie'],   
 
     'allowed_methods' => ['*'],
 
-    'allowed_origins' => ['http://localhost:3000'], // Thay đổi URL của trang web của bạn tại đây
+    'allowed_origins' => ['*'], // Thay đổi URL của trang web của bạn tại đây
 
     'allowed_headers' => ['*'],
 
