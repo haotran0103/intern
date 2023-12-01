@@ -102,11 +102,11 @@ class UpdateStatusController extends Controller
             'activity_time' => now()
         ]);
 
-        return response()->json(['message' => 'success']);
+        return response()->json(['message' => 'success'],200);
     }
     public function bannerStatus(Request $request)
     {
-        $banner = Banner_image::find($request->id);
+        $banner = banner_image::find($request->id);
 
         if (!$banner) {
             return response()->json(['message' => 'Không tìm thấy người dùng'], 404);

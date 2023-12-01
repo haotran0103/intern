@@ -25,7 +25,7 @@ class BannerImagesController extends Controller
         if (!$bannerImage) {
             return response()->json(['message' => 'Không tìm thấy hình ảnh'], 404);
         }
-        return response()->json($bannerImage);
+        return response()->json(['message'=>'success','data'=>$bannerImage]);
     }
 
     /**
@@ -33,26 +33,10 @@ class BannerImagesController extends Controller
      */
     public function store(Request $request)
     {
-        if ($request->hasFile('file') && $request->file('file')->isValid()) {
-            $uploadedImage = $request->file('file');
-
-            $uploadPath = public_path('/uploads/banner/');
-            if (!file_exists($uploadPath)) {
-                mkdir($uploadPath, 0755, true);
-            }
-
-            $imageName = time() . '.' . $uploadedImage->getClientOriginalExtension();
-            $uploadedImage->move($uploadPath, $imageName);
-            $imageUrl = '/uploads/banner/' . $imageName;
-
-            $Banner_image = new banner_image;
-            $Banner_image->image_url = $imageUrl;
-            $Banner_image->status = $request->input('status');
-            $Banner_image->save();
-            return response()->json(['message' => 'success','data'=> $Banner_image], 201);
-        } else {
-            return response()->json(['error' => 'Không có tệp hợp lệ nào được tải lên.'], 400);
-        }
+        $Banner_image = new banner_image;
+        $Banner_image->image_url = $request->input('images');
+        $Banner_image->status = $request->input('status');
+        $Banner_image->save();
     }
 
     /**

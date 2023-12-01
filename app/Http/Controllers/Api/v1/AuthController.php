@@ -7,6 +7,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use App\Http\Controllers\Controller;
+use Illuminate\Auth\AuthenticationException;
 
 class AuthController extends Controller
 {
@@ -83,6 +84,7 @@ class AuthController extends Controller
         }
 
         $user = Auth::user();
+        Auth::login($user);
         return response()->json([
             'status' => 'success',
             'user' => $user,
@@ -229,5 +231,36 @@ class AuthController extends Controller
                 'type' => 'bearer',
             ]
         ]);
+    }
+    public function updatePassword(Request $request)
+    {
+        // Xác thực xem người dùng đã đăng nhập hay chưa
+        if (!Auth::check()) {
+            throw new AuthenticationException('Unauthenticated');
+        }
+
+        $request->validate([
+            'current_password' => 'required|string',
+            'new_password' => 'required|string|min:8',
+        ]);
+
+        $user = Auth::user();
+        $currentPassword = $request->input('current_password');
+        $newPassword = $request->input('new_password');
+
+        // Kiểm tra xem mật khẩu hiện tại có đúng không
+        if (!Hash::check($currentPassword, $user->password)) {
+            return response()->json(['message' => 'Mật khẩu hiện tại không đúng'], 400);
+        }
+
+        // Nếu mật khẩu mới giống mật khẩu cũ, trả về thông báo lỗi
+        if (Hash::check($newPassword, $user->password)) {
+            return response()->json(['message' => 'Mật khẩu mới không được trùng với mật khẩu hiện tại'], 400);
+        }
+
+        // Cập nhật mật khẩu mới cho người dùng
+        User::where('id', $user->id)->update(['password' => bcrypt($newPassword)]);
+
+        return response()->json(['message' => 'Đổi mật khẩu thành công']);
     }
 }

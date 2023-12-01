@@ -13,6 +13,9 @@ use App\Http\Controllers\Api\v1\BannerImagesController;
 use App\Http\Controllers\Api\v1\HistoryController;
 use App\Http\Controllers\Api\v1\TrashController;
 use App\Http\Controllers\Api\v1\ChatController;
+use App\Models\Post;
+use Illuminate\Support\Facades\Hash;
+use App\Models\User;
 /*
 |--------------------------------------------------------------------------
 | API Routes
@@ -24,9 +27,6 @@ use App\Http\Controllers\Api\v1\ChatController;
 |
 */
 
-Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
-    return $request->user();
-});
 Route::prefix('v1')->group(function () {
     /**
      * @OA\Info(
@@ -39,8 +39,6 @@ Route::prefix('v1')->group(function () {
     Route::resource('category', CategoryController::class);
     Route::resource('bannerImages', BannerImagesController::class);
 
-    Route::get('messages', [ChatController::class, 'getMessages']);
-    Route::post('send', [ChatController::class, 'sendMessage']);
 
     Route::post('/userStatus', [UpdateStatusController::class, 'userStatus']);
     Route::post('/postStatus', [UpdateStatusController::class, 'postStatus']);
@@ -72,6 +70,54 @@ Route::prefix('v1')->group(function () {
 
     Route::get('/ReadSetting', [SettingController::class, 'ReadSetting']);
     Route::post('/UpdateSetting', [SettingController::class, 'UpdateSetting']);
+
+    Route::post('/send-message', [ChatController::class, 'sendMessage']);
+    Route::post('/get-messages', [ChatController::class, 'getMessages']);
+    Route::post('/reply-message/{id}', [ChatController::class, 'replyMessage']);
+
+    Route::post('/upload-file-post', function (Request $request) {
+        if ($request->hasFile('file')) {
+            $file = $request->file('file');
+
+            $filePath = $file->store('uploads', 'public');
+
+            return response()->json(['file_path' => $filePath], 200);
+        }
+
+        return response()->json(['message' => 'No file uploaded'], 400);
+    });
+    Route::get('/increase-views/{postId}', function ($postId) {
+        $post = Post::find($postId);
+
+        if ($post) {
+            $post->views += 1;
+            $post->save();
+
+            return response()->json(['message' => 'Số lượt xem đã được tăng'], 200);
+        }
+
+        return response()->json(['message' => 'Không tìm thấy bài viết'], 404);
+    });
+    Route::post('/change-password/{userId}', function (Request $request, $userId) {
+        $user = User::find($userId);
+
+        if ($user) {
+            if (Hash::check($request->input('current_password'), $user->password)) {
+                if ($request->input('new_password') === $request->input('confirm_password')) {
+                    $user->password = Hash::make($request->input('new_password'));
+                    $user->save();
+
+                    return response()->json(['message' => 'Password changed successfully'], 200);
+                } else {
+                    return response()->json(['error' => 'New passwords do not match'], 400);
+                }
+            } else {
+                return response()->json(['error' => 'Current password is incorrect'], 400);
+            }
+        } else {
+            return response()->json(['error' => 'User not found'], 404);
+        }
+    });
     /**
      * @OA\Post(
      *     path="/api/v1/register",
@@ -179,4 +225,6 @@ Route::prefix('v1')->group(function () {
      * )
      */
     Route::post('refresh', [AuthController::class, 'refresh']);
+
+    Route::post('updatePassword', [AuthController::class, 'updatePassword']);
 });

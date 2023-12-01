@@ -15,8 +15,8 @@ return new class extends Migration
             $table->id();
             $table->unsignedBigInteger('post_id');
             $table->unsignedBigInteger('user_id');
-            $table->text('previous_data'); // Chuyển từ string sang kiểu dữ liệu văn bản (text) để lưu dữ liệu JSON
-            $table->text('updated_data'); // Chuyển từ string sang kiểu dữ liệu văn bản (text) để lưu dữ liệu JSON
+            $table->text('previous_data')->nullable();; // Chuyển từ string sang kiểu dữ liệu văn bản (text) để lưu dữ liệu JSON
+            $table->text('updated_data')->nullable();; // Chuyển từ string sang kiểu dữ liệu văn bản (text) để lưu dữ liệu JSON
             $table->timestamp('action_time');
             $table->timestamp('created_at')->useCurrent();
             $table->timestamp('updated_at')->useCurrent();
