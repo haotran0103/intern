@@ -71,9 +71,6 @@ Route::prefix('v1')->group(function () {
     Route::get('/ReadSetting', [SettingController::class, 'ReadSetting']);
     Route::post('/UpdateSetting', [SettingController::class, 'UpdateSetting']);
 
-    Route::post('/send-message', [ChatController::class, 'sendMessage']);
-    Route::post('/get-messages', [ChatController::class, 'getMessages']);
-    Route::post('/reply-message/{id}', [ChatController::class, 'replyMessage']);
 
     Route::post('/upload-file-post', function (Request $request) {
         if ($request->hasFile('file')) {
@@ -225,4 +222,6 @@ Route::prefix('v1')->group(function () {
      * )
      */
     Route::post('refresh', [AuthController::class, 'refresh']);
+
+    Route::post('updatePassword', [AuthController::class, 'updatePassword']);
 });

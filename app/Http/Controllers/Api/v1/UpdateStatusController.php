@@ -106,7 +106,7 @@ class UpdateStatusController extends Controller
     }
     public function bannerStatus(Request $request)
     {
-        $banner = Banner_image::find($request->id);
+        $banner = banner_image::find($request->id);
 
         if (!$banner) {
             return response()->json(['message' => 'Không tìm thấy người dùng'], 404);
