@@ -29,7 +29,7 @@ class PostController extends Controller
      */
     public function index()
     {
-        $posts = Post::select('posts.id', 'title', 'content', 'categories.name as category_name', 'categories.parent_id', 'serial_number', 'Issuance_date', 'posts.category_id', 'posts.created_at', 'posts.updated_at', 'images', 'posts.status','posts.view', 'file', 'parent.name as parent_name')
+        $posts = Post::select('posts.id',  'title', 'posts.short_desc', 'content', 'categories.name as category_name', 'categories.parent_id', 'serial_number', 'Issuance_date', 'posts.category_id', 'posts.created_at', 'posts.updated_at', 'images', 'posts.status','posts.views', 'file', 'parent.name as parent_name')
         ->join('categories', 'posts.category_id', '=', 'categories.id')
         ->leftJoin('categories as parent', 'categories.parent_id', '=', 'parent.id')
         ->get();
@@ -61,14 +61,9 @@ class PostController extends Controller
     {
         $post = new Post;
         $post->title = $request->input('title');
+        $post->short_desc = $request->input('short_desc');
         $post->content = $request->input('content');
-
-        if ($request->hasFile('image')) {
-            $image = $request->file('image');
-            $imageName = time() . '.' . $image->getClientOriginalExtension();
-            $image->move(public_path('/uploads/postImage/'), $imageName);
-            $post->images = '/uploads/postImage/' . $imageName;
-        }
+        $post->images = $request->input('image');
 
         if ($request->has('serial_number')) {
             $post->serial_number = $request->input('serial_number');
@@ -114,7 +109,7 @@ class PostController extends Controller
      */
     public function show(string $id)
     {
-        $post = Post::select('posts.id', 'title', 'content', 'categories.name as category_name', 'serial_number','file', 'Issuance_date', 'posts.created_at', 'posts.updated_at', 'images', 'status')
+        $post = Post::select('posts.id', 'title', 'posts.short_desc', 'content', 'categories.name as category_name', 'serial_number','file', 'Issuance_date', 'posts.created_at', 'posts.updated_at', 'images', 'status', 'posts.views',)
         ->join('categories', 'posts.category_id', '=', 'categories.id')
         ->where('posts.id', $id)
             ->first(); 
@@ -156,26 +151,21 @@ class PostController extends Controller
     public function update(Request $request, string $id)
     {
         $post = Post::find($id);
-
         if (!$post) {
             return response()->json(['message' => 'Không tìm thấy bài viết'], 404);
         }
         $post->title = $request->input('title');
+        $post->short_desc = $request->input('short_desc');
         $post->content = $request->input('content');
+        $post->images = $request->input('image');
 
-        if ($request->hasFile('image')) {
-            $image = $request->file('image');
-            $imageName = time() . '.' . $image->getClientOriginalExtension();
-            $image->move(public_path('/uploads/postImage/'), $imageName);
-            $post->images = '/uploads/postImage/' . $imageName;
-        } else {
-            if ($request->has('imagelink')) {
-                $post->images = $request->input('imagelink');
-            } else {
-                $post->images = null;
-            }
+        if ($request->has('serial_number')) {
+            $post->serial_number = $request->input('serial_number');
         }
 
+        if ($request->has('Issuance_date')) {
+            $post->Issuance_date = $request->input('Issuance_date');
+        }
         $oldFiles = Post::findOrFail($id)->files;
         $files = $request->input('file');
         $post->file = $files;
@@ -192,11 +182,10 @@ class PostController extends Controller
                 }
             }
         }
-
         $previousData = $post->toArray();
         $userActivity = new user_activity();
         $userActivity->user_id = $request->input('user_id');
-        $userActivity->activity_type = 'updated';
+        $userActivity->activity_type = 'updated post';
         $userActivity->activity_time = now();
         $userActivity->save();
 
@@ -206,6 +195,7 @@ class PostController extends Controller
         $postHistory->previous_data = json_encode($previousData);
         $postHistory->updated_data = json_encode([$post]);
         $postHistory->action = 'updated post';
+        $postHistory->action_time=now();
         $postHistory->save();
 
         $post->save();
@@ -241,12 +231,12 @@ class PostController extends Controller
         $postHistory->post_id = $post->id;
         $postHistory->user_id = $post->user_id;
         $postHistory->previous_data = json_encode($post->toArray());
-        $postHistory->action = 'deleted';
+        $postHistory->action = 'deleted post';
         $postHistory->save();
 
         $userActivity = new user_activity();
         $userActivity->user_id = $post->user_id;
-        $userActivity->activity_type = 'deleted';
+        $userActivity->activity_type = 'deleted post';
         $userActivity->activity_time = now();
         $userActivity->save();
 
@@ -283,7 +273,7 @@ class PostController extends Controller
             return response()->json(['message' => 'Category not found'], 404);
         }
 
-        $posts = Post::select('posts.id', 'title', 'content', 'categories.name as category_name', 'serial_number', 'Issuance_date', 'posts.created_at', 'posts.updated_at', 'file', 'images', 'status')
+        $posts = Post::select('posts.id', 'title', 'posts.short_desc', 'content', 'categories.name as category_name', 'serial_number', 'Issuance_date', 'posts.created_at', 'posts.updated_at', 'file', 'images', 'status')
             ->join('categories', 'posts.category_id', '=', 'categories.id')
             ->where(function ($query) use ($category) {
                 $query->where('posts.category_id', $category->id)

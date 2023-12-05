@@ -7,7 +7,7 @@ use Illuminate\Http\Request;
 use App\Models\User;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage; // Import model User
-
+use App\Http\Middleware\CheckRootUser;
 class UserController extends Controller
 {
 
@@ -17,7 +17,10 @@ class UserController extends Controller
      *   version="1.0.0"
      * )
      */
-
+    // public function __construct()
+    // {
+    //     $this->middleware('checkRoot')->only(['index', 'store', 'update', 'destroy']);
+    // }
     /**
      * @OA\Get(
      *     path="/api/v1/user",
@@ -47,7 +50,7 @@ class UserController extends Controller
 
                 ];
             });
-            return response()->json(['message'=>'success','data' => $usersWithImageUrls]);
+            return response()->json(['message' => 'success', 'data' => $usersWithImageUrls]);
         } catch (\Exception $e) {
             Log::error($e->getMessage());
             return response()->json(['error' => 'An error occurred'], 500);
@@ -164,17 +167,10 @@ class UserController extends Controller
         $user->email = $request->input('email');
         $user->phone = $request->input('phone');
         $user->status = $request->input('status', 'active');
-
-        if ($request->hasFile('image')) {
-            if ($user->avatar) {
-                Storage::delete($user->avatar);
-            }
-            $image = $request->file('image');
-            $imageName = time() . '.' . $image->getClientOriginalExtension();
-            $image->storeAs('avatars', $imageName);
-            $user->avatar = 'avatars/' . $imageName;
+        
+        if ($request->input('role') === 'root') {
+            return response()->json(['message' => 'Không được phép thay đổi vai trò thành "root"'], 403);
         }
-
         if ($request->has('password')) {
             $user->password = bcrypt($request->input('password'));
         }

@@ -102,7 +102,7 @@ class UpdateStatusController extends Controller
             'activity_time' => now()
         ]);
 
-        return response()->json(['message' => 'success']);
+        return response()->json(['message' => 'success'],200);
     }
     public function bannerStatus(Request $request)
     {
