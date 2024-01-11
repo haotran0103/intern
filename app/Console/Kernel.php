@@ -8,16 +8,19 @@ use Illuminate\Foundation\Console\Kernel as ConsoleKernel;
 
 class Kernel extends ConsoleKernel
 {
+    protected $commands = [
+        'App\Console\Commands\PostHistoryCommands',
+        'App\Console\Commands\UserHistoryCommands',
+        'App\Console\Commands\PostTrashCommands'
+    ];
     /**
      * Define the application's command schedule.
      */
     protected function schedule(Schedule $schedule): void
     {
-        $schedule->call(function () {
-        Post::onlyTrashed()
-            ->where('deleted_at', '<=', now()->subDays(30))
-            ->forceDelete();
-       })->daily();
+        $schedule->command('app:post-trash-commands')->daily();
+        $schedule->command('app:user-history-commands')->daily();
+        $schedule->command('app:post-history-commands')->daily();
     }
 
     /**

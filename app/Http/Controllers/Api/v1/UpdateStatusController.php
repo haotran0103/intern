@@ -3,7 +3,7 @@
 namespace App\Http\Controllers\Api\v1;
 
 use App\Http\Controllers\Controller;
-use App\Models\Banner_image;
+use App\Models\bannerImage;
 use App\Models\Post;
 use App\Models\post_history;
 use App\Models\User;
@@ -106,7 +106,7 @@ class UpdateStatusController extends Controller
     }
     public function bannerStatus(Request $request)
     {
-        $banner = banner_image::find($request->id);
+        $banner = bannerImage::find($request->id);
 
         if (!$banner) {
             return response()->json(['message' => 'Không tìm thấy người dùng'], 404);

@@ -15,19 +15,21 @@ return [
     |
     */
 
-    'paths' => ['*','sanctum/csrf-cookie'],   
+    'paths' => ['*'],
 
     'allowed_methods' => ['*'],
 
-    'allowed_origins' => ['*'], // Thay đổi URL của trang web của bạn tại đây
+    'allowed_origins' => ['*'],
+
+    'allowed_origins_patterns' => ['*localhost*'],
 
     'allowed_headers' => ['*'],
 
     'exposed_headers' => [],
 
-    'max_age' => 60,
+    'max_age' => 0,
 
-    'supports_credentials' => false,
+    'supports_credentials' => true,
 
 
 

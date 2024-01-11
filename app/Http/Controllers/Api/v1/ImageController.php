@@ -54,7 +54,7 @@ class ImageController extends Controller
         }
 
         if (count($uploadedUrls) > 0) {
-            // Lưu các URL hợp lệ vào session hoặc làm điều gì đó khác với chúng
+
             $tempImages = session('tempImages', []);
             $tempImages = array_merge($tempImages, $uploadedUrls);
             session(['tempImages' => $tempImages]);
@@ -89,14 +89,14 @@ class ImageController extends Controller
         if ($request->hasFile('file') && $request->file('file')->isValid()) {
             $uploadedImage = $request->file('file');
 
-            $uploadPath = public_path('/uploads/banner/');
+            $uploadPath = public_path('uploads/banner/');
             if (!file_exists($uploadPath)) {
                 mkdir($uploadPath, 0755, true);
             }
 
             $imageName = time() . '.' . $uploadedImage->getClientOriginalExtension();
             $uploadedImage->move($uploadPath, $imageName);
-            $imageUrl = '/uploads/banner/' . $imageName;
+            $imageUrl = 'uploads/banner/' . $imageName;
 
             $tempImages = session('tempImages', []);
             $tempImages[] = $imageUrl;

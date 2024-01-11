@@ -14,7 +14,10 @@ return new class extends Migration
         Schema::create('messages', function (Blueprint $table) {
             $table->id();
             $table->text('content');
-            $table->unsignedBigInteger('user_id')->nullable();
+            $table->unsignedBigInteger('sender_id')->nullable();
+            $table->unsignedBigInteger('recipient_id')->nullable();
+            $table->string('sender_type')->default('customer');
+            $table->tinyInteger('read')->default(0);
             $table->timestamps();
         });
     }

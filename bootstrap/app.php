@@ -10,7 +10,9 @@
 | the IoC container for the system binding all of the various parts.
 |
 */
-
+header('Access-Control-Allow-Origin: *');
+header('Access-Control-Allow-Methods: GET, POST, OPTIONS, HEAD');
+header('Access-Control-Allow-Headers: Authorization, Origin, X-Requested-With, Content-Type, Accept');
 $app = new Illuminate\Foundation\Application(
     $_ENV['APP_BASE_PATH'] ?? dirname(__DIR__)
 );
