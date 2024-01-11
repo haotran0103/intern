@@ -15,7 +15,8 @@ class Post extends Model
         'title',
         'content',
         'status',
-        'user_id'
+        'user_id',
+        'file',
     ];
     public function tags()
     {

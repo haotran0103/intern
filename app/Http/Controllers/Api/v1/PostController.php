@@ -63,8 +63,15 @@ class PostController extends Controller
         $post->title = $request->input('title');
         $post->short_desc = $request->input('short_desc');
         $post->content = $request->input('content');
-        $post->images = $request->input('image');
 
+        if ($request->hasFile('image')) {
+            $image = $request->file('image');
+            $imageName = time() . '_' . $image->getClientOriginalName();
+            $image->move(public_path('uploads/postImages'), $imageName); // Lưu hình ảnh vào thư mục public/images
+
+            $post->images = 'uploads/postImages/' . $imageName; // Lưu đường dẫn của hình ảnh vào cơ sở dữ liệu
+        }
+        
         if ($request->has('serial_number')) {
             $post->serial_number = $request->input('serial_number');
         }
@@ -154,33 +161,60 @@ class PostController extends Controller
         if (!$post) {
             return response()->json(['message' => 'Không tìm thấy bài viết'], 404);
         }
+
         $post->title = $request->input('title');
         $post->short_desc = $request->input('short_desc');
         $post->content = $request->input('content');
-        $post->images = $request->input('image');
 
+        if ($request->hasFile('image')) {
+            $image = $request->file('image');
+            $imageName = time() . '_' . $image->getClientOriginalName();
+            $image->move(public_path('uploads/postImages'), $imageName);
+
+            if ($post->images) {
+                $oldImagePath = public_path($post->images);
+                if (file_exists($oldImagePath)) {
+                    unlink($oldImagePath);
+                }
+            }
+            $post->images = 'uploads/postImages/' . $imageName;
+        }
+
+        
         if ($request->has('serial_number')) {
             $post->serial_number = $request->input('serial_number');
         }
-
         if ($request->has('Issuance_date')) {
             $post->Issuance_date = $request->input('Issuance_date');
         }
-        $oldFiles = Post::findOrFail($id)->files;
-        $files = $request->input('file');
-        $post->file = $files;
 
-        if ($oldFiles) {
-                $filesToDelete = array_diff($oldFiles, $files);
-            } else {
-                $filesToDelete = null;
-            }
-        if ($filesToDelete !== null) {
-            foreach ($filesToDelete as $fileToDelete) {
-                if (file_exists(public_path($fileToDelete))) {
-                    unlink(public_path($fileToDelete));
+        $oldFiles = $post->file;
+        $files = $request->input('file');
+        $filesArray = explode(',', $files);
+    
+        if ($files === null || empty($filesArray)) {
+            if ($oldFiles) {
+                $oldFilesArray = explode(',', $oldFiles);
+                foreach ($oldFilesArray as $fileToDelete) {
+                    $filePath = public_path($fileToDelete);
+                    if (file_exists($filePath)) {
+                        unlink($filePath);
+                    }
                 }
             }
+            $post->file = null;
+        } else {
+            if ($oldFiles) {
+                $oldFilesArray = explode(',', $oldFiles);
+                $filesToDelete = array_diff($oldFilesArray, $filesArray);
+                foreach ($filesToDelete as $fileToDelete) {
+                    $filePath = public_path($fileToDelete);
+                    if (file_exists($filePath)) {
+                        unlink($filePath);
+                    }
+                }
+            }
+            $post->file = implode(',', $filesArray); 
         }
         $previousData = $post->toArray();
         $userActivity = new user_activity();
@@ -195,13 +229,14 @@ class PostController extends Controller
         $postHistory->previous_data = json_encode($previousData);
         $postHistory->updated_data = json_encode([$post]);
         $postHistory->action = 'updated post';
-        $postHistory->action_time=now();
+        $postHistory->action_time = now();
         $postHistory->save();
 
         $post->save();
 
         return response()->json(['message' => 'success', 'post' => $post], 200);
     }
+
 
     /**
      * @OA\Delete(
@@ -259,7 +294,7 @@ class PostController extends Controller
             $fileName = pathinfo($originalName, PATHINFO_FILENAME);
             $newFileName = "{$fileName}.{$extension}";
             $uploadedFile->move($uploadPath, $originalName);
-            $filesUrl = '/uploads/filePost/' . $newFileName;
+            $filesUrl = 'uploads/filePost/' . $newFileName;
 
             return response()->json(['message' => 'success', 'data' => $filesUrl]);
         }

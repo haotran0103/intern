@@ -82,9 +82,7 @@ class AuthController extends Controller
                 'message' => 'Unauthorized',
             ], 401);
         }
-
         $user = Auth::user();
-        Auth::login($user);
         return response()->json([
             'status' => 'success',
             'user' => $user,

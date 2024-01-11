@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers\Api\v1;
 
-use App\Models\banner_image;
+use App\Models\bannerImage;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
 class BannerImagesController extends Controller
@@ -12,7 +12,7 @@ class BannerImagesController extends Controller
      */
     public function index()
     {
-        $bannerImages = banner_image::where('status', 'active')->limit(5)->get();
+        $bannerImages = bannerImage::where('status', 'active')->limit(5)->get();
         return response()->json(['message'=>'success','data'=> $bannerImages]);
     }
 
@@ -21,7 +21,7 @@ class BannerImagesController extends Controller
      */
     public function show($id)
     {
-        $bannerImage = banner_image::find($id);
+        $bannerImage = bannerImage::find($id);
         if (!$bannerImage) {
             return response()->json(['message' => 'Không tìm thấy hình ảnh'], 404);
         }
@@ -33,10 +33,15 @@ class BannerImagesController extends Controller
      */
     public function store(Request $request)
     {
-        $Banner_image = new banner_image;
-        $Banner_image->image_url = $request->input('images');
-        $Banner_image->status = $request->input('status');
-        $Banner_image->save();
+        $bannerImage = new bannerImage;
+        if ($request->hasFile('image')) {
+            $image = $request->file('image');
+            $imageName = time() . '_' . $image->getClientOriginalName();
+            $image->move(public_path('uploads/banner'), $imageName); 
+            $bannerImage->image_url = 'uploads/banner/' . $imageName; 
+        }
+        $bannerImage->status = $request->input('status');
+        $bannerImage->save();
     }
 
     /**
@@ -44,7 +49,7 @@ class BannerImagesController extends Controller
      */
     public function update(Request $request, $id)
     {
-        $bannerImage = banner_image::find($id);
+        $bannerImage = bannerImage::find($id);
         if (!$bannerImage) {
             return response()->json(['message' => 'Không tìm thấy hình ảnh'], 404);
         }
@@ -63,16 +68,21 @@ class BannerImagesController extends Controller
      */
     public function destroy($id)
     {
-        $bannerImage = banner_image::find($id);
+        $bannerImage = bannerImage::find($id);
         if (!$bannerImage) {
             return response()->json(['message' => 'Không tìm thấy hình ảnh'], 404);
         }
-
+        if ($bannerImage->image_url) {
+            $oldImagePath = public_path($bannerImage->image_url);
+            if (file_exists($oldImagePath)) {
+                unlink($oldImagePath);
+            }
+        }
         $bannerImage->delete();
         return response()->json(['message' => 'success']);
     }
     public function getAll(){
-        $bannerImages = banner_image::all();
+        $bannerImages = bannerImage::all();
         return response()->json(['message' => 'success', 'data' => $bannerImages]);
     }
 

@@ -13,6 +13,7 @@ use App\Http\Controllers\Api\v1\BannerImagesController;
 use App\Http\Controllers\Api\v1\HistoryController;
 use App\Http\Controllers\Api\v1\TrashController;
 use App\Http\Controllers\Api\v1\ChatController;
+use App\Http\Controllers\Api\v1\ChatBotController;
 use App\Models\Post;
 use Illuminate\Support\Facades\Hash;
 use App\Models\User;
@@ -39,10 +40,21 @@ Route::prefix('v1')->group(function () {
     Route::resource('category', CategoryController::class);
     Route::resource('bannerImages', BannerImagesController::class);
 
+    Route::get('get-answer', [ChatBotController::class, 'index']);
+    Route::post('get-answer', [ChatBotController::class, 'getAnswer']);
+    Route::post('add-answer', [ChatBotController::class, 'addData']);
+    Route::post('edit-answer', [ChatBotController::class, 'editData']);
+    Route::delete('delete-answer', [ChatBotController::class, 'deleteData']);
+
+
+    Route::post('/send-message-to-admin', [ChatController::class, 'sendMessageToAdmin']);
+    Route::post('/reply-message-to-guest', [ChatController::class, 'replyMessageToGuest']);
+    Route::get('/guest-get-message/{token}', [ChatController::class, 'guestGetMessage']);
+    Route::get('/admin-get-message', [ChatController::class, 'adminGetMessage']);
 
     Route::post('/userStatus', [UpdateStatusController::class, 'userStatus']);
-    Route::post('/postStatus', [UpdateStatusController::class, 'postStatus']);
-    Route::post('/bannerStatus', [UpdateStatusController::class, 'bannerStatus']);
+    Route::post('/postStatus/{idu}', [UpdateStatusController::class, 'postStatus']);
+    Route::post('/bannerStatus/{idu}', [UpdateStatusController::class, 'bannerStatus']);
 
     Route::get('/trashed-posts', [TrashController::class, 'getTrashedPosts']);
     Route::put('/restore-posts/{id}', [TrashController::class, 'restoreTrashedPost']);
@@ -60,6 +72,7 @@ Route::prefix('v1')->group(function () {
     
     Route::get('/postByCategory/{id}', [PostController::class, 'getAllbyCategory']);
     Route::post('/uploadPostFile', [PostController::class, 'uploadPostFile']);
+    Route::post('/updatePost/{id}', [PostController::class, 'update']);
 
     Route::post('/permanentlyDeleteUser', [UserController::class, 'permanentlyDeleteUser']);
 
