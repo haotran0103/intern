@@ -18,9 +18,7 @@ class Kernel extends ConsoleKernel
      */
     protected function schedule(Schedule $schedule): void
     {
-        $schedule->command('app:post-trash-commands')->daily();
-        $schedule->command('app:user-history-commands')->daily();
-        $schedule->command('app:post-history-commands')->daily();
+        $schedule->command('app:post-trash-commands')->cron('0 0 * * *');;
     }
 
     /**

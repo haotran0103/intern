@@ -70,7 +70,7 @@ class UpdateStatusController extends Controller
      *     @OA\Response(response=404, description="Không tìm thấy bài viết"),
      * )
      */
-    public function postStatus(Request $request)
+    public function postStatus(Request $request,$idu)
     {
         $post = Post::find($request->id);
 
@@ -87,24 +87,26 @@ class UpdateStatusController extends Controller
         }
 
         $post->save();
-        $user_id = $request->user_id ?? 1;
-        post_history::create([
-            'post_id' => $post->id,
-            'user_id' => $user_id,
-            'action'  =>'change status',
-            'action_time' => now(),
-            'previous_data' => json_encode($oldPostData),
-            'updated_data' => json_encode($post->toArray()),
-        ]);
-        user_activity::create([
-            'user_id' => $user_id,
-            'activity_type' => 'Updated post status to ' . $post->status,
-            'activity_time' => now()
-        ]);
+        $user_id = $idu ?? 1;
+        $post_history = new post_history;
+        $post_history->user_id = $user_id;
+        $post_history->post_id = $post->id;
+        $post_history-> action = 'Updated post status to ' . $post->status;
+        $post_history ->  previous_data = json_encode($oldPostData);
+        $post_history ->  previous_data = json_encode($post->toArray());
+        $post_history ->  action_time = now();
+        $post_history->save();
+
+        $user_activity = new user_activity;
+        $user_activity->user_id = $user_id;
+        $user_activity-> activity_type = 'Updated post status to ' . $post->status;
+        $user_activity ->  activity_time = now();
+        $user_activity->save();
+
 
         return response()->json(['message' => 'success'],200);
     }
-    public function bannerStatus(Request $request)
+    public function bannerStatus(Request $request,$idu)
     {
         $banner = bannerImage::find($request->id);
 
@@ -117,12 +119,13 @@ class UpdateStatusController extends Controller
         } else {
             $banner->status = 'active';
         }
-        $user_id = $request->user_id ?? 1;
-        user_activity::create([
-            'user_id' => $user_id,
-            'activity_type' => 'Updated banner status to ' . $banner->status,
-            'activity_time' => now()
-        ]);
+        $user_id = $idu ?? 1;
+        $user_activity = new user_activity;
+        $user_activity->user_id = $user_id;
+        $user_activity-> activity_type = 'Updated banner status to ' . $banner->status;
+        $user_activity ->  activity_time = now();
+        $user_activity->save();
+
         $banner->save();
 
         return response()->json(['message' => 'success']);

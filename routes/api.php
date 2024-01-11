@@ -53,8 +53,8 @@ Route::prefix('v1')->group(function () {
     Route::get('/admin-get-message', [ChatController::class, 'adminGetMessage']);
 
     Route::post('/userStatus', [UpdateStatusController::class, 'userStatus']);
-    Route::post('/postStatus', [UpdateStatusController::class, 'postStatus']);
-    Route::post('/bannerStatus', [UpdateStatusController::class, 'bannerStatus']);
+    Route::post('/postStatus/{idu}', [UpdateStatusController::class, 'postStatus']);
+    Route::post('/bannerStatus/{idu}', [UpdateStatusController::class, 'bannerStatus']);
 
     Route::get('/trashed-posts', [TrashController::class, 'getTrashedPosts']);
     Route::put('/restore-posts/{id}', [TrashController::class, 'restoreTrashedPost']);

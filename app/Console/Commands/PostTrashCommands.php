@@ -25,10 +25,33 @@ class PostTrashCommands extends Command
      */
     public function handle()
     {
-        $sevenDaysAgo = now()->subDays(1);
-        Post::onlyTrashed()
-            ->where('deleted_at', '<', $sevenDaysAgo)
-            ->forceDelete(); // Xóa vĩnh viễn khỏi thùng rác
-        $this->info('Deleted posts older than 7 days.');
+    $sevenDaysAgo = now()->subDays(7); 
+    $postsToDelete = Post::onlyTrashed()
+        ->where('deleted_at', '<', $sevenDaysAgo)
+        ->get();
+
+    foreach ($postsToDelete as $post) {
+
+        if ($post->images) {
+            $oldImagePath = public_path($post->images);
+            if (file_exists($oldImagePath)) {
+                unlink($oldImagePath);
+            }
+        }
+
+        $oldFiles = $post->file;
+            if ($oldFiles) {
+                $oldFilesArray = explode(',', $oldFiles);
+                foreach ($oldFilesArray as $fileToDelete) {
+                    $filePath = public_path($fileToDelete);
+                    if (file_exists($filePath)) {
+                        unlink($filePath);
+                    }
+                }
+        }
+
+        $post->forceDelete();
+        $this->info('Deleted post ID: ' . $post->id . ' and associated images/files.');
+    }
     }
 }
