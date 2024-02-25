@@ -18,7 +18,8 @@ class Kernel extends ConsoleKernel
      */
     protected function schedule(Schedule $schedule): void
     {
-        $schedule->command('app:post-trash-commands')->cron('0 0 * * *');;
+        $schedule->command('app:post-trash-commands')->cron('0 0 * * *');
+          $schedule->command('DeleteOldMessages')->daily();
     }
 
     /**

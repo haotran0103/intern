@@ -6,31 +6,10 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\User;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Storage; // Import model User
-use App\Http\Middleware\CheckRootUser;
+
 class UserController extends Controller
 {
 
-    /**
-     * @OA\Info(
-     *   title="User API Documentation",
-     *   version="1.0.0"
-     * )
-     */
-    // public function __construct()
-    // {
-    //     $this->middleware('checkRoot')->only(['index', 'store', 'update', 'destroy']);
-    // }
-    /**
-     * @OA\Get(
-     *     path="/api/v1/user",
-     *     summary="Lấy danh sách người dùng",
-     *     operationId="getUsers",
-     *     tags={"Users"},
-     *     @OA\Response(response=200, description="Danh sách người dùng"),
-     *     @OA\Response(response=500, description="Lỗi server"),
-     * )
-     */
     public function index()
     {
         try {
@@ -57,27 +36,6 @@ class UserController extends Controller
         }
     }
 
-
-    /**
-     * @OA\Post(
-     *     path="/api/v1/user",
-     *     summary="Tạo người dùng mới",
-     *     operationId="createUser",
-     *     tags={"Users"},
-     *     @OA\RequestBody(
-     *         required=true,
-     *         @OA\JsonContent(
-     *             @OA\Property(property="name", type="string"),
-     *             @OA\Property(property="email", type="string"),
-     *             @OA\Property(property="password", type="string"),
-     *             @OA\Property(property="phone", type="string"),
-     *             @OA\Property(property="image", type="string", format="binary"),
-     *             @OA\Property(property="status", type="string", default="active"),
-     *         )
-     *     ),
-     *     @OA\Response(response=201, description="Người dùng đã được tạo"),
-     * )
-     */
     public function store(Request $request)
     {
         $user = new User();
@@ -99,17 +57,6 @@ class UserController extends Controller
         return response()->json(['message' => 'Người dùng đã được tạo', 'data' => $user]);
     }
 
-    /**
-     * @OA\Get(
-     *     path="/api/v1/user/{id}",
-     *     summary="Lấy thông tin người dùng theo ID",
-     *     operationId="getUserById",
-     *     tags={"Users"},
-     *     @OA\Parameter(name="id", in="path", required=true, description="ID của người dùng", @OA\Schema(type="string")),
-     *     @OA\Response(response=200, description="Thông tin người dùng"),
-     *     @OA\Response(response=404, description="Không tìm thấy người dùng"),
-     * )
-     */
     public function show(string $id)
     {
         $user = User::find($id);
@@ -133,28 +80,7 @@ class UserController extends Controller
     }
 
 
-    /**
-     * @OA\Put(
-     *     path="/api/v1/user/{id}",
-     *     summary="Cập nhật thông tin người dùng",
-     *     operationId="updateUser",
-     *     tags={"Users"},
-     *     @OA\Parameter(name="id", in="path", required=true, description="ID của người dùng", @OA\Schema(type="string")),
-     *     @OA\RequestBody(
-     *         required=true,
-     *         @OA\JsonContent(
-     *             @OA\Property(property="name", type="string"),
-     *             @OA\Property(property="email", type="string"),
-     *             @OA\Property(property="phone", type="string"),
-     *             @OA\Property(property="image", type="string", format="binary"),
-     *             @OA\Property(property="status", type="string", default="active"),
-     *             @OA\Property(property="password", type="string"),
-     *         )
-     *     ),
-     *     @OA\Response(response=200, description="Thông tin người dùng đã được cập nhật"),
-     *     @OA\Response(response=404, description="Không tìm thấy người dùng"),
-     * )
-     */
+   
     public function update(Request $request, string $id)
     {
         $user = User::find($id);
@@ -179,17 +105,6 @@ class UserController extends Controller
 
         return response()->json(['message' => 'success', 'data' => $user]);
     }
-    /**
-     * @OA\Delete(
-     *     path="/api/v1/user/{id}",
-     *     summary="Xóa người dùng theo ID",
-     *     operationId="deleteUser",
-     *     tags={"Users"},
-     *     @OA\Parameter(name="id", in="path", required=true, description="ID của người dùng", @OA\Schema(type="string")),
-     *     @OA\Response(response=204, description="Người dùng đã bị xóa"),
-     *     @OA\Response(response=404, description="Không tìm thấy người dùng"),
-     * )
-     */
     public function destroy(string $id)
     {
         $user = User::find($id);

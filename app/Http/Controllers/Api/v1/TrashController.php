@@ -11,11 +11,16 @@ use Illuminate\Http\Request;
 class TrashController extends Controller
 {
     public function getTrashedPosts()
-    {
-        $trashedPosts = Post::onlyTrashed()->get();
+{
+    $trashedPosts = Post::onlyTrashed()
+        ->select('posts.id',  'title', 'posts.short_desc', 'content', 'categories.name as category_name', 'categories.parent_id', 'serial_number', 'Issuance_date', 'posts.category_id', 'posts.created_at', 'posts.updated_at', 'images', 'posts.status', 'posts.views', 'file', 'parent.name as parent_name')
+        ->join('categories', 'posts.category_id', '=', 'categories.id')
+        ->leftJoin('categories as parent', 'categories.parent_id', '=', 'parent.id')
+        ->get();
 
-        return response()->json(['message' => 'success','data'=>$trashedPosts]);
-    }
+    return response()->json(['message' => 'success', 'data' => $trashedPosts]);
+}
+
 
     public function restoreTrashedPost($id)
     {

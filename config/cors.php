@@ -19,18 +19,15 @@ return [
 
     'allowed_methods' => ['*'],
 
-    'allowed_origins' => ['*'],
+    'allowed_origins' => ['*,*'],
 
-    'allowed_origins_patterns' => ['*localhost*'],
+    'allowed_origins_patterns' => ['/(.*)\.wip/' , '/(.*)\.test/'],
 
     'allowed_headers' => ['*'],
 
-    'exposed_headers' => [],
+    'exposed_headers' => ['x-custom-header'],
 
-    'max_age' => 0,
+    'max_age' => 60,
 
-    'supports_credentials' => true,
-
-
-
+    'supports_credentials' => false,
 ];

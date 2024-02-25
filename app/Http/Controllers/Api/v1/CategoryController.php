@@ -4,26 +4,11 @@ namespace App\Http\Controllers\Api\v1;
 
 use App\Http\Controllers\Controller;
 use App\Models\Category;
-use App\Models\user_activity;
 use Illuminate\Http\Request;
 
 class CategoryController extends Controller
 {
-    /**
-     * @OA\Info(
-     *     title="Category API Documentation",
-     *     version="1.0.0",
-     * )
-     */
-    /**
-     * @OA\Get(
-     *     path="/api/v1/categories",
-     *     summary="Lấy danh sách tất cả các danh mục",
-     *     operationId="getCategories",
-     *     tags={"Categories"},
-     *     @OA\Response(response=200, description="Danh sách tất cả các danh mục"),
-     * )
-     */
+
     public function index()
     {
         $categories = Category::select('categories.id', 'categories.name','parent.name as parent_name', 'parent.id as parent_id', 'categories.created_at', 'categories.updated_at')
@@ -35,28 +20,9 @@ class CategoryController extends Controller
             }
             return $category;
         });
-
-        return response()->json(['message' => 'success', 'data' => $categories]);
+        $categories_data = Category::all();
+        return response()->json(['message' => 'success', 'data' => $categories,'category' => $categories_data]);
     }
-
-
-    /**
-     * @OA\Get(
-     *     path="/api/v1/categories/{id}",
-     *     summary="Lấy thông tin của danh mục theo ID",
-     *     operationId="getCategory",
-     *     tags={"Categories"},
-     *     @OA\Parameter(
-     *         name="id",
-     *         in="path",
-     *         required=true,
-     *         description="ID của danh mục",
-     *         @OA\Schema(type="integer")
-     *     ),
-     *     @OA\Response(response=200, description="Thông tin của danh mục"),
-     *     @OA\Response(response=404, description="Không tìm thấy danh mục"),
-     * )
-     */
     public function show($id)
     {
         $category = Category::find($id);
@@ -65,22 +31,7 @@ class CategoryController extends Controller
         }
         return response()->json(['message' => 'success', 'data' => $category]);
     }
-    /**
-     * @OA\Post(
-     *     path="/api/v1/categories",
-     *     summary="Tạo danh mục mới",
-     *     operationId="createCategory",
-     *     tags={"Categories"},
-     *     @OA\RequestBody(
-     *         required=true,
-     *         @OA\JsonContent(
-     *             @OA\Property(property="name", type="string", description="Tên của danh mục"),
-     *             @OA\Property(property="parent_id", type="integer", description="ID của danh mục cha (nếu có)"),
-     *         )
-     *     ),
-     *     @OA\Response(response=201, description="Danh mục mới đã được tạo"),
-     * )
-     */
+   
     public function store(Request $request)
     {
         $category = new Category();
@@ -92,33 +43,14 @@ class CategoryController extends Controller
 
         return response()->json(['message' => 'success','data'=>$category], 201);
     }
-    /**
-     * @OA\Put(
-     *     path="/api/v1/categories/{id}",
-     *     summary="Cập nhật danh mục theo ID",
-     *     operationId="updateCategory",
-     *     tags={"Categories"},
-     *     @OA\Parameter(
-     *         name="id",
-     *         in="path",
-     *         required=true,
-     *         description="ID của danh mục",
-     *         @OA\Schema(type="integer")
-     *     ),
-     *     @OA\RequestBody(
-     *         required=true,
-     *         @OA\JsonContent(
-     *             @OA\Property(property="name", type="string", description="Tên của danh mục"),
-     *             @OA\Property(property="parent_id", type="integer", description="ID của danh mục cha (nếu có)"),
-     *         )
-     *     ),
-     *     @OA\Response(response=200, description="Danh mục đã được cập nhật"),
-     *     @OA\Response(response=404, description="Không tìm thấy danh mục"),
-     * )
-     */
-
+   
     public function update(Request $request, $id)
     {
+        $request->validate([
+            'name' => 'required',
+            'parent_id' => 'required'
+        ]);
+        
         $category = Category::find($id);
         if (!$category) {
             return response()->json(['message' => 'Category not found'], 404);
@@ -126,33 +58,31 @@ class CategoryController extends Controller
 
         $category->name = $request->input('name');
         $category->parent_id = $request->input('parent_id');
-        $user_id = $request->user_id ?? 1;  
-        user_activity::create([
-            'user_id' => $user_id,
-            'activity_type' => 'Updated banner status to ' . $category->name. ' ,'. $category->parent_id,
-            'activity_time' => now()
-        ]);
+
         $category->save();
 
         return response()->json(['message' => 'success','data'=>$category]);
     }
-    /**
-     * @OA\Delete(
-     *     path="/api/v1/categories/{id}",
-     *     summary="Xóa danh mục theo ID",
-     *     operationId="deleteCategory",
-     *     tags={"Categories"},
-     *     @OA\Parameter(
-     *         name="id",
-     *         in="path",
-     *         required=true,
-     *         description="ID của danh mục",
-     *         @OA\Schema(type="integer")
-     *     ),
-     *     @OA\Response(response=204, description="Danh mục đã được xóa"),
-     *     @OA\Response(response=404, description="Không tìm thấy danh mục"),
-     * )
-     */
+
+    public function updatecategory(Request $request, $id)
+    {
+        $request->validate([
+            'name' => 'required',
+            'parent_id' => 'required'
+        ]);
+        
+        $category = Category::find($id);
+        if (!$category) {
+            return response()->json(['message' => 'Category not found'], 404);
+        }
+
+        $category->name = $request->input('name');
+        $category->parent_id = $request->input('parent_id');
+        $category->save();
+
+        return response()->json(['message' => 'success','data'=>$category]);
+    }
+
     public function destroy($id)
     {
         $category = Category::find($id);
@@ -164,15 +94,6 @@ class CategoryController extends Controller
 
         return response()->json(['message'=>'success'], 204);
     }
-    /**
-     * @OA\Get(
-     *     path="/api/v1/parent-categories",
-     *     summary="Lấy danh sách các danh mục cha",
-     *     operationId="getParentCategories",
-     *     tags={"Categories"},
-     *     @OA\Response(response=200, description="Danh sách các danh mục cha"),
-     * )
-     */
     public function getParentCategory()
     {
         $categories = Category::where('parent_id', 0)->get();
@@ -181,36 +102,13 @@ class CategoryController extends Controller
         }
         return response()->json(['message' => 'success','data' => $categories]);
     }
-    /**
-     * @OA\Get(
-     *     path="/api/v1/sub-categories/{id}",
-     *     summary="Lấy danh sách các danh mục con dựa trên ID danh mục cha",
-     *     operationId="getSubCategories",
-     *     tags={"Categories"},
-     *     @OA\Parameter(
-     *         name="id",
-     *         in="path",
-     *         required=true,
-     *         description="ID của danh mục cha",
-     *         @OA\Schema(type="integer")
-     *     ),
-     *     @OA\Response(response=200, description="Danh sách các danh mục con"),
-     * )
-     */
+
     public function getSubCategory($id)
     {
         $subcategories = Category::where('parent_id', $id)->get();
         return response()->json(['message' => 'success','data' => $subcategories]);
     }
-    /**
-     * @OA\Get(
-     *     path="/api/v1/all-categories-with-subcategories",
-     *     summary="Lấy danh sách tất cả các danh mục với danh mục con",
-     *     operationId="getAllCategoriesWithSubcategories",
-     *     tags={"Categories"},
-     *     @OA\Response(response=200, description="Danh sách tất cả các danh mục với danh mục con"),
-     * )
-     */
+
     public function getAllCategoriesWithSubcategories()
     {
         $categories = Category::where('parent_id', 0)->get();
@@ -219,5 +117,12 @@ class CategoryController extends Controller
         }
         return response()->json(['message' => 'success','data' => $categories]);
     }
-
+    public function getIntroductionChild(){
+        $name = 'Giới thiệu';
+        $categoryIds = Category::where('name', $name)->orWhere('parent_id', function ($query) use ($name) {
+            $query->select('id')->from('categories')->where('name', $name);
+        })->get();
+        
+        return response()->json(['data' => $categoryIds],200);
+    }
 }

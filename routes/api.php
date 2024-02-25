@@ -35,67 +35,109 @@ Route::prefix('v1')->group(function () {
      *   version="1.0.0"
      * )
      */
-    Route::resource('user', UserController::class);
-    Route::resource('post', PostController::class);
-    Route::resource('category', CategoryController::class);
-    Route::resource('bannerImages', BannerImagesController::class);
+
+
+    Route::get('post', [PostController::class, 'index']);
+
+    Route::get('/posts/filter/{categoryId}', [PostController::class, 'filterByCategory']);
+
+    Route::get('category', [CategoryController::class, 'index']);
+    Route::get('all-categories', [CategoryController::class, 'getIntroductionChild']);
 
     Route::get('get-answer', [ChatBotController::class, 'index']);
     Route::post('get-answer', [ChatBotController::class, 'getAnswer']);
-    Route::post('add-answer', [ChatBotController::class, 'addData']);
-    Route::post('edit-answer', [ChatBotController::class, 'editData']);
-    Route::delete('delete-answer', [ChatBotController::class, 'deleteData']);
 
+    Route::get('/getParentCategory', [CategoryController::class, 'getParentCategory']);
+    Route::get('/getSubCategory/{id}', [CategoryController::class, 'getSubCategory']);
+    Route::post('/categories/{id}', [CategoryController::class, 'updatecategory']);
 
     Route::post('/send-message-to-admin', [ChatController::class, 'sendMessageToAdmin']);
     Route::post('/reply-message-to-guest', [ChatController::class, 'replyMessageToGuest']);
     Route::get('/guest-get-message/{token}', [ChatController::class, 'guestGetMessage']);
-    Route::get('/admin-get-message', [ChatController::class, 'adminGetMessage']);
 
-    Route::post('/userStatus', [UpdateStatusController::class, 'userStatus']);
-    Route::post('/postStatus/{idu}', [UpdateStatusController::class, 'postStatus']);
-    Route::post('/bannerStatus/{idu}', [UpdateStatusController::class, 'bannerStatus']);
-
-    Route::get('/trashed-posts', [TrashController::class, 'getTrashedPosts']);
-    Route::put('/restore-posts/{id}', [TrashController::class, 'restoreTrashedPost']);
-    Route::get('/trashed', [TrashController::class, 'getTrashedUser']);
-    Route::put('/restore/{id}', [TrashController::class, 'restoreTrashedUser']);
-
-    Route::get('/getBanner', [BannerImagesController::class, 'getAll']);
-
-    Route::get('/post_history', [HistoryController::class, 'post_history']);
-    Route::get('/user_history', [HistoryController::class, 'user_history']);
-
-    Route::get('/getParentCategory', [CategoryController::class, 'getParentCategory']);
-    Route::get('/getSubCategory/{id}', [CategoryController::class, 'getSubCategory']);
-    Route::get('/getAllCategoriesWithSubcategories', [CategoryController::class, 'getAllCategoriesWithSubcategories']);
-    
-    Route::get('/postByCategory/{id}', [PostController::class, 'getAllbyCategory']);
-    Route::post('/uploadPostFile', [PostController::class, 'uploadPostFile']);
-    Route::post('/updatePost/{id}', [PostController::class, 'update']);
-
-    Route::post('/permanentlyDeleteUser', [UserController::class, 'permanentlyDeleteUser']);
-
-    Route::post('/upload-images', [ImageController::class, 'uploadImagePost']);
-    Route::post('/banner-images', [ImageController::class, 'uploadImageBanner']);
-    Route::get('/clearTempImages', [ImageController::class, 'clearTempImages']);
-    Route::post('/remove-image', [ImageController::class, 'removeImage']);
+    Route::post('add-answer', [ChatBotController::class, 'addQuestion']);
+    Route::post('edit-answer', [ChatBotController::class, 'editData']);
+    Route::delete('delete-answer', [ChatBotController::class, 'deleteData']);
 
     Route::get('/ReadSetting', [SettingController::class, 'ReadSetting']);
-    Route::post('/UpdateSetting', [SettingController::class, 'UpdateSetting']);
+    Route::middleware(['auth'])->group(function () {
 
+        Route::get('user/{user}', [UserController::class, 'show']);
+        Route::put('user/{user}', [UserController::class, 'update']);
 
-    Route::post('/upload-file-post', function (Request $request) {
-        if ($request->hasFile('file')) {
-            $file = $request->file('file');
+        Route::post('category', [CategoryController::class, 'store']);
+        Route::get('category/{category}', [CategoryController::class, 'show']);
+        Route::put('category/{category}', [CategoryController::class, 'update']);
+        Route::delete('category/{category}', [CategoryController::class, 'destroy']);
 
-            $filePath = $file->store('uploads', 'public');
+        Route::post('post', [PostController::class, 'store']);
+        Route::get('post/{post}', [PostController::class, 'show']);
+        // Route::put('post/{post}', [PostController::class, 'update']);
+        Route::delete('post/{post}', [PostController::class, 'destroy']);
 
-            return response()->json(['file_path' => $filePath], 200);
-        }
+        Route::get('/admin-get-message', [ChatController::class, 'adminGetMessage']);
 
-        return response()->json(['message' => 'No file uploaded'], 400);
+        Route::post('/postStatus', [UpdateStatusController::class, 'postStatus']);
+
+        Route::get('/postByCategory/{id}', [PostController::class, 'getAllbyCategory']);
+        Route::post('/uploadPostFile', [PostController::class, 'uploadPostFile']);
+        Route::post('/updatePost', [PostController::class, 'update']);
+
+        Route::post('/permanentlyDeleteUser', [UserController::class, 'permanentlyDeleteUser']);
+
+        Route::post('/upload-images', [ImageController::class, 'uploadImagePost']);
+        Route::post('/banner-images', [ImageController::class, 'uploadImageBanner']);
+        Route::get('/clearTempImages', [ImageController::class, 'clearTempImages']);
+        Route::post('/remove-image', [ImageController::class, 'removeImage']);
+
+        
+        Route::post('/AddSetting', [SettingController::class, 'AddSetting']);
+        Route::post('/UpdateSetting/{id}', [SettingController::class, 'UpdateSetting']);
+        Route::middleware(['auth.root'])->group(function () {
+            // Route::get('/post_history', [HistoryController::class, 'post_history']);
+            // Route::get('/user_history', [HistoryController::class, 'user_history']);
+            Route::post('/userStatus', [UpdateStatusController::class, 'userStatus']);
+            Route::get('user', [UserController::class, 'index']);
+            Route::delete('user/{user}', [UserController::class, 'destroy']);
+            Route::get('/trashed', [TrashController::class, 'getTrashedUser']);
+            Route::put('/restore/{id}', [TrashController::class, 'restoreTrashedUser']);
+            Route::get('/trashed-posts', [TrashController::class, 'getTrashedPosts']);
+            Route::put('/restore-posts/{id}', [TrashController::class, 'restoreTrashedPost']);
+        });
+        Route::post('/change-password/{userId}', function (Request $request, $userId) {
+            $user = User::find($userId);
+
+            if ($user) {
+                if (Hash::check($request->input('current_password'), $user->password)) {
+                    if ($request->input('new_password') === $request->input('confirm_password')) {
+                        $user->password = Hash::make($request->input('new_password'));
+                        $user->save();
+
+                        return response()->json(['message' => 'Password changed successfully'], 200);
+                    } else {
+                        return response()->json(['error' => 'New passwords do not match'], 400);
+                    }
+                } else {
+                    return response()->json(['error' => 'Current password is incorrect'], 400);
+                }
+            } else {
+                return response()->json(['error' => 'User not found'], 404);
+            }
+        });
+
+        Route::post('/upload-file-post', function (Request $request) {
+            if ($request->hasFile('file')) {
+                $file = $request->file('file');
+
+                $filePath = $file->store('uploads', 'public');
+
+                return response()->json(['file_path' => $filePath], 200);
+            }
+
+            return response()->json(['message' => 'No file uploaded'], 400);
+        });
     });
+
     Route::get('/increase-views/{postId}', function ($postId) {
         $post = Post::find($postId);
 
@@ -108,134 +150,25 @@ Route::prefix('v1')->group(function () {
 
         return response()->json(['message' => 'Không tìm thấy bài viết'], 404);
     });
-    Route::post('/change-password/{userId}', function (Request $request, $userId) {
-        $user = User::find($userId);
 
-        if ($user) {
-            if (Hash::check($request->input('current_password'), $user->password)) {
-                if ($request->input('new_password') === $request->input('confirm_password')) {
-                    $user->password = Hash::make($request->input('new_password'));
-                    $user->save();
 
-                    return response()->json(['message' => 'Password changed successfully'], 200);
-                } else {
-                    return response()->json(['error' => 'New passwords do not match'], 400);
-                }
-            } else {
-                return response()->json(['error' => 'Current password is incorrect'], 400);
-            }
-        } else {
-            return response()->json(['error' => 'User not found'], 404);
-        }
+    Route::group([
+
+        'middleware' => 'api',
+        'prefix' => 'auth'
+
+    ], function ($router) {
+
+        Route::post('login', [AuthController::class, 'login']);
+
+        Route::post('register', [AuthController::class, 'register'])->middleware('auth.root');
+
+        Route::post('logout', [AuthController::class, 'logout']);
+
+        Route::post('refresh', [AuthController::class, 'refresh']);
+
+        Route::post('updatePassword', [AuthController::class, 'updatePassword']);
+
+        Route::get('profile', [AuthController::class, 'profile']);
     });
-    /**
-     * @OA\Post(
-     *     path="/api/v1/register",
-     *     summary="Register a new user",
-     *     operationId="register",
-     *     tags={"Authentication"},
-     *     @OA\RequestBody(
-     *         description="User registration details",
-     *         required=true,
-     *         @OA\JsonContent(
-     *             @OA\Property(property="name", type="string", example="John Doe"),
-     *             @OA\Property(property="email", type="string", format="email", example="user@example.com"),
-     *             @OA\Property(property="password", type="string", example="password"),
-     *             @OA\Property(property="phone", type="string", example="1234567890"),
-     *             @OA\Property(property="image", type="string", format="binary")
-     *         )
-     *     ),
-     *     @OA\Response(
-     *         response=200,
-     *         description="User registration successful",
-     *         @OA\JsonContent(
-     *             @OA\Property(property="status", type="string", example="success"),
-     *             @OA.Property(property="message", type="string", example="User created successfully"),
-     *             @OA\Property(property="user", type="object"),
-     *             @OA.Property(property="authorization", type="object",
-     *                 @OA\Property(property="token", type="string", example="your_jwt_token"),
-     *                 @OA.Property(property="type", type="string", example="bearer")
-     *             )
-     *         )
-     *     )
-     * )
-     */
-    
-    Route::post('login', [AuthController::class, 'login']);
-    /**
-     * @OA\Post(
-     *     path="/api/v1/register",
-     *     summary="Register a new user",
-     *     operationId="register",
-     *     tags={"Authentication"},
-     *     @OA\RequestBody(
-     *         description="User registration details",
-     *         required=true,
-     *         @OA\JsonContent(
-     *             @OA\Property(property="name", type="string", example="John Doe"),
-     *             @OA\Property(property="email", type="string", format="email", example="user@example.com"),
-     *             @OA\Property(property="password", type="string", example="password"),
-     *             @OA\Property(property="phone", type="string", example="1234567890"),
-     *             @OA\Property(property="image", type="string", format="binary")
-     *         )
-     *     ),
-     *     @OA\Response(
-     *         response=200,
-     *         description="User registration successful",
-     *         @OA\JsonContent(
-     *             @OA\Property(property="status", type="string", example="success"),
-     *             @OA\Property(property="message", type="string", example="User created successfully"),
-     *             @OA\Property(property="user", type="object"),
-     *             @OA\Property(property="authorization", type="object",
-     *                 @OA\Property(property="token", type="string", example="your_jwt_token"),
-     *                 @OA\Property(property="type", type="string", example="bearer")
-     *             )
-     *         )
-     *     )
-     * )
-     */
-    Route::post('register', [AuthController::class, 'register']);
-    /**
-     * @OA\Post(
-     *     path="/api/v1/logout",
-     *     summary="Logout the user",
-     *     operationId="logout",
-     *     tags={"Authentication"},
-     *     security={{ "bearerAuth": {} }},
-     *     @OA\Response(
-     *         response=200,
-     *         description="Successfully logged out",
-     *         @OA\JsonContent(
-     *             @OA.Property(property="status", type="string", example="success"),
-     *             @OA.Property(property="message", type="string", example="Successfully logged out")
-     *         )
-     *     )
-     * )
-     */
-    Route::post('logout', [AuthController::class, 'logout']);
-    /**
-     * @OA\Post(
-     *     path="/api/v1/refresh",
-     *     summary="Refresh the user's token",
-     *     operationId="refresh",
-     *     tags={"Authentication"},
-     *     security={{ "bearerAuth": {} }},
-     *     @OA\Response(
-     *         response=200,
-     *         description="Token refreshed successfully",
-     *         @OA\JsonContent(
-     *             @OA.Property(property="status", type="string", example="success"),
-     *             @OA.Property(property="user", type="object"),
-     *             @OA.Property(property="authorization", type="object",
-     *                 @OA.Property(property="token", type="string", example="your_refreshed_jwt_token"),
-     *                 @OA.Property(property="type", type="string", example="bearer")
-     *             )
-     *         )
-     *     )
-     * )
-     */
-    Route::post('refresh', [AuthController::class, 'refresh']);
-
-    Route::post('updatePassword', [AuthController::class, 'updatePassword']);
 });
-

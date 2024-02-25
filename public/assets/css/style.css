@@ -1,0 +1,13 @@
+
+.img-header{
+    object-fit: cover;
+    object-position: center;
+    position: absolute;
+    top: 0;
+    left: 0;
+    z-index: -1;
+}
+.nav-dist_8{
+    background-color: #0000FF;
+    font-weight: bold;
+}

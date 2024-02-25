@@ -1,16 +1,23 @@
-var server = require('http').Server();
-
+var app = require('express')();
+var server = require('http').Server(app);
 var io = require('socket.io')(server);
-
-var Redis = require('ioredis');
-var redis = new Redis(6666);
-
-redis.subscribe('chat', function (err, count) {
-});
-redis.on('message', function (channel, message) {
-    console.log(channel, message);
-    message = JSON.parse(message);
-    io.emit(message.event, message.data);
-});
+var redis = require('redis');
 
 server.listen(6001);
+io.on('connection', function (socket) {
+
+  console.log("new client connected");
+  var redisClient = redis.createClient();
+  redisClient.subscribe('message');
+
+  redisClient.on("message", function(channel, message) {
+    console.log("mew message in queue "+ message + "channel");
+    socket.emit(channel, message);
+  });
+
+  socket.on('disconnect', function() {
+    redisClient.quit();
+  });
+
+});
+

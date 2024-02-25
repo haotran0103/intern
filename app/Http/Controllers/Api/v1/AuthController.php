@@ -7,125 +7,49 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use App\Http\Controllers\Controller;
+use Exception;
 use Illuminate\Auth\AuthenticationException;
+use Tymon\JWTAuth\Facades\JWTAuth;
 
 class AuthController extends Controller
 {
-    /**
-     * @OA\Info(
-     *   title="API Documentation",
-     *   version="1.0.0"
-     * )
-     */
 
-    /**
-     * @OA\SecurityScheme(
-     *   type="http",
-     *   securityScheme="bearerAuth",
-     *   scheme="bearer",
-     *   bearerFormat="JWT"
-     * )
-     */
     public function __construct()
     {
-        $this->middleware('auth:api', ['except' => ['login', 'register']]);
+        $this->middleware('auth:api', ['except' => ['login', 'refresh']]);
     }
-    /**
-     * @OA\Post(
-     *     path="/api/v1/login",
-     *     summary="Authenticate a user",
-     *     operationId="login",
-     *     tags={"Authentication"},
-     *     @OA\RequestBody(
-     *         description="User credentials",
-     *         required=true,
-     *         @OA\JsonContent(
-     *             @OA\Property(property="email", type="string", format="email", example="user@example.com"),
-     *             @OA\Property(property="password", type="string", example="password")
-     *         )
-     *     ),
-     *     @OA\Response(
-     *         response=200,
-     *         description="Successful login",
-     *         @OA\JsonContent(
-     *             @OA\Property(property="status", type="string", example="success"),
-     *             @OA\Property(property="user", type="object"),
-     *             @OA\Property(property="authorization", type="object",
-     *                 @OA\Property(property="token", type="string", example="your_jwt_token"),
-     *                 @OA\Property(property="type", type="string", example="bearer")
-     *             )
-     *         )
-     *     ),
-     *     @OA\Response(
-     *         response=401,
-     *         description="Unauthorized",
-     *         @OA\JsonContent(
-     *             @OA\Property(property="status", type="string", example="error"),
-     *             @OA\Property(property="message", type="string", example="Unauthorized")
-     *         )
-     *     )
-     * )
-     */
-    public function login(Request $request)
+
+    public function login()
     {
-        $request->validate([
-            'email' => 'required|string|email',
-            'password' => 'required|string',
-        ]);
-        $credentials = $request->only('email', 'password');
+        $credentials = request(['email', 'password']);
 
-        $token = Auth::attempt($credentials);
-        if (!$token) {
-            return response()->json([
-                'pass' => $request->password,
-                'status' => 'error',
-                'message' => 'Unauthorized',
-            ], 401);
+        if (!$token = auth()->attempt($credentials)) {
+            return response()->json(['error' => 'Unauthorized'], 401);
         }
-        $user = Auth::user();
-        return response()->json([
-            'status' => 'success',
-            'user' => $user,
-            'pass' => $request->password,
-            'authorization' => [
-                'token' => $token,
-                'type' => 'bearer',
-            ]
-        ]);
+        $user = auth()->user();
+        if ($user->status !== 'active') {
+            return response()->json(['error' => 'Unauthorized'], 401);
+        }
+        $refreshToken = $this->createRefreshToken();
+        return $this->respondWithToken($token, $refreshToken);
     }
 
-    /**
-     * @OA\Post(
-     *     path="/api/v1/register",
-     *     summary="Register a new user",
-     *     operationId="register",
-     *     tags={"Authentication"},
-     *     @OA\RequestBody(
-     *         description="User registration details",
-     *         required=true,
-     *         @OA\JsonContent(
-     *             @OA\Property(property="name", type="string", example="John Doe"),
-     *             @OA\Property(property="email", type="string", format="email", example="user@example.com"),
-     *             @OA\Property(property="password", type="string", example="password"),
-     *             @OA\Property(property="phone", type="string", example="1234567890"),
-     *             @OA\Property(property="image", type="string", format="binary")
-     *         )
-     *     ),
-     *     @OA\Response(
-     *         response=200,
-     *         description="User registration successful",
-     *         @OA\JsonContent(
-     *             @OA\Property(property="status", type="string", example="success"),
-     *             @OA\Property(property="message", type="string", example="User created successfully"),
-     *             @OA\Property(property="user", type="object"),
-     *             @OA\Property(property="authorization", type="object",
-     *                 @OA\Property(property="token", type="string", example="your_jwt_token"),
-     *                 @OA\Property(property="type", type="string", example="bearer")
-     *             )
-     *         )
-     *     )
-     * )
-     */
+    public function profile()
+    {
+        try {
+            return response()->json(auth()->user());
+        } catch (Exception $e) {
+            return response()->json(['error' => 'user not found'], 404);
+        }
+    }
+    public function logout()
+    {
+        $token = JWTAuth::parseToken()->getToken();
+        JWTAuth::invalidate($token);
+        auth()->logout();
+
+        return response()->json(['message' => 'Successfully logged out']);
+    }
     public function register(Request $request)
     {
         $validationRules = [
@@ -158,76 +82,44 @@ class AuthController extends Controller
         $user->status = 'active';
         $user->save();
 
-        $token = Auth::login($user);
         return response()->json([
-            'status' => 'success',
-            'message' => 'User created successfully',
+            'message' => 'success',
             'user' => $user,
-            'pass' => $request->password,
-            'authorization' => [
-                'token' => $token,
-                'type' => 'bearer',
-            ]
         ]);
     }
-
-    /**
-     * @OA\Post(
-     *     path="/api/v1/logout",
-     *     summary="Logout the user",
-     *     operationId="logout",
-     *     tags={"Authentication"},
-     *     security={{ "bearerAuth": {} }},
-     *     @OA\Response(
-     *         response=200,
-     *         description="Successfully logged out",
-     *         @OA\JsonContent(
-     *             @OA\Property(property="status", type="string", example="success"),
-     *             @OA\Property(property="message", type="string", example="Successfully logged out")
-     *         )
-     *     )
-     * )
-     */
-    public function logout()
+    public function refresh(Request $request)
     {
-        Auth::logout();
-        return response()->json([
-            'status' => 'success',
-            'message' => 'Successfully logged out',
-        ]);
+        $refreshToken = $request->input('refresh_token');
+        try {
+            // Giải mã refresh token
+            $decoded = JWTAuth::getJWTProvider()->decode($refreshToken);
+
+            // Kiểm tra xem giải mã có thành công không
+            if ($decoded && isset($decoded['user_id'])) {
+                $user = User::find($decoded['user_id']);
+                if (!$user) {
+                    return response()->json(['error' => 'User not found'], 404);
+                }
+
+                $token = auth()->login($user);
+                $refreshToken = $this->createRefreshToken();
+
+                return $this->respondWithToken($token, $refreshToken);
+            } else {
+                return response()->json(['error' => 'Invalid refresh token'], 400);
+            }
+        } catch (Exception $e) {
+            return response()->json(['error' => 'Exception: ' . $e->getMessage()]);
+        }
     }
 
-
-    /**
-     * @OA\Post(
-     *     path="/api/v1/refresh",
-     *     summary="Refresh the user's token",
-     *     operationId="refresh",
-     *     tags={"Authentication"},
-     *     security={{ "bearerAuth": {} }},
-     *     @OA\Response(
-     *         response=200,
-     *         description="Token refreshed successfully",
-     *         @OA\JsonContent(
-     *             @OA\Property(property="status", type="string", example="success"),
-     *             @OA\Property(property="user", type="object"),
-     *             @OA\Property(property="authorization", type="object",
-     *                 @OA\Property(property="token", type="string", example="your_refreshed_jwt_token"),
-     *                 @OA\Property(property="type", type="string", example="bearer")
-     *             )
-     *         )
-     *     )
-     * )
-     */
-    public function refresh()
+    protected function respondWithToken($token, $refreshToken)
     {
         return response()->json([
-            'status' => 'success',
-            'user' => Auth::user(),
-            'authorization' => [
-                'token' => Auth::refresh(),
-                'type' => 'bearer',
-            ]
+            'access_token' => $token,
+            'refresh_token' => $refreshToken,
+            'role' => auth()->user()->role,
+            'token_type' => 'bearer',
         ]);
     }
     public function updatePassword(Request $request)
@@ -260,5 +152,15 @@ class AuthController extends Controller
         User::where('id', $user->id)->update(['password' => bcrypt($newPassword)]);
 
         return response()->json(['message' => 'Đổi mật khẩu thành công']);
+    }
+    private function createRefreshToken()
+    {
+        $data = [
+            'user_id' => auth()->user()->id,
+            'random' => rand() . time(),
+            'exp' => time() + config('jwt.refresh_ttl'),
+        ];
+        $refreshToken = JWTAuth::getJWTProvider()->encode($data);
+        return $refreshToken;
     }
 }

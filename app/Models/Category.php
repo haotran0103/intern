@@ -12,4 +12,22 @@ class Category extends Model
         'name',
         'parent_id',
     ];
+    public function children()
+    {
+        return $this->hasMany(Category::class, 'parent_id');
+    }
+    public function parent()
+    {
+        return $this->belongsTo(Category::class, 'parent_id');
+    }
+
+    public function posts()
+    {
+        return $this->hasMany(Post::class);
+    }
+    public function allChildren()
+{
+    return $this->children()->with('allChildren');
+}
+    
 }

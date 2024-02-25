@@ -31,14 +31,12 @@ class ChatEvent implements ShouldBroadcastNow
      *
      * @return array<int, \Illuminate\Broadcasting\Channel>
      */
-    public function broadcastOn()
+    public function broadcastOn(): Channel
     {
-        \Log::info('Broadcasting on channel "chat"');
         return new Channel('chat'.$this->token);
     }
     public function broadcastWith()
     {
-        \Log::info($this->message);
         return [
             'content'=> $this->message->content,
             'sender_type'=>$this->message->sender_type,
